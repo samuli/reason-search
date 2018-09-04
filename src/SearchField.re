@@ -19,7 +19,8 @@ let make = (~onSearch, _children) => {
   render: self =>
     <div>
       <input
-        className="edit border border-gray border-solid p-2 w-full"
+        id="search"
+        className="search edit border border-gray border-solid p-2 w-full"
         value={self.state.text}
         onChange={
           event => self.send(Change(ReactEvent.Form.target(event)##value))
@@ -31,6 +32,11 @@ let make = (~onSearch, _children) => {
               self.send(Search);
             }
         }
+        autoFocus=true
       />
     </div>,
+  didMount: _self => {
+    let _x = [%bs.raw {| document.getElementById("search").focus() |}];
+    ();
+  },
 };

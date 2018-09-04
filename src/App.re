@@ -140,33 +140,41 @@ let make = _children => {
       {
         self.state.loading ?
           ReasonReact.null :
-          <div>
-            <div className="info mt-2 mb-2">
-              {str("Results: " ++ string_of_int(resultCnt))}
-            </div>
-            <ul className="results mt-5 list-reset">
-              {
-                switch (self.state.result.resultCount) {
-                | 0 => str("No results")
-                | _ =>
-                  ReasonReact.array(
-                    Array.map(
-                      (r: Finna.record) =>
-                        <Record
-                          record=r
-                          onSelectFacet={
-                            filter => self.send(FacetResults(filter))
-                          }
-                          showImages={self.state.showImages}
-                        />,
-                      self.state.records,
-                    ),
-                  )
-                }
-              }
-            </ul>
+          <div className="info mt-2 mb-2">
+            {str("Results: " ++ string_of_int(resultCnt))}
           </div>
       }
+      <ul className="results mt-5 list-reset">
+        {
+          switch (self.state.result.resultCount) {
+          | 0 =>
+            <div>
+              <p> {str("No results")} </p>
+              {
+                switch (Array.length(self.state.filters)) {
+                | 0 => ReasonReact.null
+                | _ =>
+                  <div onClick=(_ => self.send(ClearFilters))>
+                    {str("Remove filters")}
+                  </div>
+                }
+              }
+            </div>
+          | _ =>
+            ReasonReact.array(
+              Array.map(
+                (r: Finna.record) =>
+                  <Record
+                    record=r
+                    onSelectFacet={filter => self.send(FacetResults(filter))}
+                    showImages={self.state.showImages}
+                  />,
+                self.state.records,
+              ),
+            )
+          }
+        }
+      </ul>
       <NextPage
         loading={self.state.loading}
         pageCnt={self.state.pageCnt}
@@ -179,10 +187,12 @@ let make = _children => {
     let document = Webapi.Dom.Document.asEventTarget(Webapi.Dom.document);
     Webapi.Dom.EventTarget.addEventListener(
       "keypress",
-      _ => Js.log("key"),
+      _ => {
+        let _x = [%bs.raw {| document.getElementById("search").focus() |}];
+        ();
+      },
       document,
     );
-
     self.send(Search(self.state.text, true));
   },
 };
