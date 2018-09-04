@@ -13,6 +13,7 @@ let make =
       ~onSelectFacet,
       ~onClearFacet,
       ~facetKey,
+      ~facetType,
       ~items,
       ~activeFacet: option(Finna.filter),
       _children,
@@ -24,7 +25,7 @@ let make =
     | FacetClick(value) =>
       switch (
         List.find(
-          (f: Finna.facet) => f.label == value,
+          (f: Finna.facet) => Finna.facetLabel(f.label) == value,
           Array.to_list(items),
         )
       ) {
@@ -38,26 +39,41 @@ let make =
   render: self =>
     switch (activeFacet) {
     | Some(activeFacet) =>
-      <div
-        className="pointer mr-2 text-xs uppercase p-2 bg-grey-light rounded cursor-pointer w-auto inline-block hover:bg-red-light"
-        onClick=(_e => onClearFacet(activeFacet))>
-        {str(activeFacet.facet.label)}
-      </div>
+      switch ((facetType: Finna.facetType)) {
+      | Normal =>
+        <div
+          className="pointer mr-2 text-xs uppercase p-2 bg-grey-light rounded cursor-pointer w-auto inline-block hover:bg-red-light"
+          onClick=(_e => onClearFacet(activeFacet))>
+          {str(Finna.facetLabel(activeFacet.facet.label))}
+        </div>
+      | Boolean => str("bool")
+      }
+
     | None =>
-      <select
-        onChange=(
-          e => self.send(FacetClick(ReactEvent.Form.target(e)##value))
-        )
-        className={"w-1/3 mr-2 p-1 facet " ++ facetKey}>
-        {
-          ReasonReact.array(
-            Array.map(
-              (facet: Finna.facet) =>
-                <option key={facet.value}> {str(facet.label)} </option>,
-              items,
-            ),
+      switch ((facetType: Finna.facetType)) {
+      | Normal =>
+        <select
+          onChange=(
+            e => self.send(FacetClick(ReactEvent.Form.target(e)##value))
           )
-        }
-      </select>
+          className={"w-1/3 mr-2 p-1 facet " ++ facetKey}>
+          {
+            ReasonReact.array(
+              Array.map(
+                (facet: Finna.facet) =>
+                  <option key={Finna.facetLabel(facet.value)}>
+                    {str(Finna.facetLabel(facet.label))}
+                  </option>,
+                items,
+              ),
+            )
+          }
+        </select>
+      | Boolean =>
+        <div>
+          <input type_="checkbox" name="foo" value="foo" />
+          {str("foo")}
+        </div>
+      }
     },
 };

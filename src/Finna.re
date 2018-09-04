@@ -6,14 +6,41 @@ type translated = {
   value: string,
   label: string,
 };
+
+type facetLabelVariant =
+  | String(string)
+  | Int(int);
+
+let facetLabel = label =>
+  switch (label) {
+  | String(label) => label
+  | Int(label) => string_of_int(label)
+  };
+
+type facetType =
+  | Normal
+  | Boolean;
+
 type facet = {
-  value: string,
-  label: string,
+  value: facetLabelVariant,
+  label: facetLabelVariant,
   count: int,
+  facetType,
 };
+
 type filter = {
   key: string,
   facet,
+};
+
+let getFilter = (~key, ~label, ~value) => {
+  key,
+  facet: {
+    label: String(label),
+    value: String(value),
+    count: 0,
+    facetType: Normal,
+  },
 };
 
 type author = {
@@ -42,17 +69,24 @@ let translated = json =>
     value: json |> field("value", string),
     label: json |> field("translated", string),
   };
-let facet = json =>
+
+let decodeFacetLabel =
+  Json.Decode.(
+    either(string |> map(s => String(s)), int |> map(i => Int(i)))
+  );
+let decodeFacetType =
+  Json.Decode.(either(string |> map(_ => Normal), int |> map(_ => Boolean)));
+
+let facet = json => {
+  Js.log(json);
   Json.Decode.{
-    value: json |> field("value", string),
-    label: json |> field("translated", string),
     count: json |> field("count", int),
+    value: json |> field("value", decodeFacetLabel),
+    label: json |> field("translated", decodeFacetLabel),
+    facetType: json |> field("translated", decodeFacetType),
   };
-/*
- authors: {
-   primary: "lorem ipsum": { role: "jee"}
- }
- */
+};
+
 let record = json =>
   Json.Decode.{
     id: json |> field("id", string),
@@ -82,13 +116,13 @@ let search = (lookfor, filters, page, limit, onResults) => {
     Array.map(
       f => {
         let key = f.key;
-        let value = f.facet.value;
+        let value = facetLabel(f.facet.value);
         {j|filter[]=$key:"$value"|j};
       },
       filters,
     )
     |> Js.Array.joinWith("&");
-  let facetStr = "&facet[]=format&facet[]=building";
+  let facetStr = "&facet[]=format&facet[]=building&facet[]=online_boolean";
 
   let url = {j|$apiUrl/api/v1/search?lookfor=$lookfor&type=AllFields&field[]=id&field[]=formats&field[]=title&field[]=buildings&field[]=images&field[]=authors&field[]=year&sort=relevance%2Cid%20asc&page=$page&limit=$limit&prettyPrint=false&lng=fi&$filterStr$facetStr&facetFilter[]=building%3A0%2F.*&facetFilter[]=format%3A0%2F.*|j};
 

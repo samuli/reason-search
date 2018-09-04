@@ -31,16 +31,20 @@ let make =
                      | exception Not_found => None
                      };
                    let dummy: Finna.facet = {
-                     value: "",
-                     label: facetKey,
+                     value: String(" k"),
+                     label: String(facetKey),
                      count: 0,
+                     facetType: Normal,
                    };
+                   let hd: Finna.facet = List.hd(Array.to_list(items));
+                   let facetType = hd.facetType;
                    let items =
                      Array.of_list([dummy, ...Array.to_list(items)]);
                    <Facet
                      onSelectFacet
                      onClearFacet
                      facetKey
+                     facetType
                      items
                      activeFacet
                    />;
