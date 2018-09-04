@@ -137,24 +137,36 @@ let make = _children => {
           onClearFilters={_ => self.send(ClearFilters)}
         />;
       }
-      <div className="info mt-2 mb-2">
-        {str("Results: " ++ string_of_int(resultCnt))}
-      </div>
-      <ul className="results mt-5 mb-5 list-reset">
-        {
-          switch (self.state.result.resultCount) {
-          | 0 => str("No results")
-          | _ =>
-            ReasonReact.array(
-              Array.map(
-                (r: Finna.record) =>
-                  <Record record=r showImages={self.state.showImages} />,
-                self.state.records,
-              ),
-            )
-          }
-        }
-      </ul>
+      {
+        self.state.loading ?
+          ReasonReact.null :
+          <div>
+            <div className="info mt-2 mb-2">
+              {str("Results: " ++ string_of_int(resultCnt))}
+            </div>
+            <ul className="results mt-5 list-reset">
+              {
+                switch (self.state.result.resultCount) {
+                | 0 => str("No results")
+                | _ =>
+                  ReasonReact.array(
+                    Array.map(
+                      (r: Finna.record) =>
+                        <Record
+                          record=r
+                          onSelectFacet={
+                            filter => self.send(FacetResults(filter))
+                          }
+                          showImages={self.state.showImages}
+                        />,
+                      self.state.records,
+                    ),
+                  )
+                }
+              }
+            </ul>
+          </div>
+      }
       <NextPage
         loading={self.state.loading}
         pageCnt={self.state.pageCnt}
@@ -163,5 +175,14 @@ let make = _children => {
       />
     </div>;
   },
-  didMount: self => self.send(Search(self.state.text, true)),
+  didMount: self => {
+    let document = Webapi.Dom.Document.asEventTarget(Webapi.Dom.document);
+    Webapi.Dom.EventTarget.addEventListener(
+      "keypress",
+      _ => Js.log("key"),
+      document,
+    );
+
+    self.send(Search(self.state.text, true));
+  },
 };

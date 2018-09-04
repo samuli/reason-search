@@ -1,4 +1,6 @@
 let apiUrl = "https://api.finna.fi";
+let baseUrl = "https://finna.fi";
+let recordBaseUrl = baseUrl ++ "/Record/";
 
 type translated = {
   value: string,
@@ -88,7 +90,7 @@ let search = (lookfor, filters, page, limit, onResults) => {
     |> Js.Array.joinWith("&");
   let facetStr = "&facet[]=format&facet[]=building";
 
-  let url = {j|$apiUrl/api/v1/search?lookfor=$lookfor&type=AllFields&field[]=id&field[]=formats&field[]=title&field[]=buildings&field[]=images&field[]=authors&field[]=year&sort=relevance%2Cid%20asc&page=$page&limit=$limit&prettyPrint=false&lng=fi&$filterStr$facetStr|j};
+  let url = {j|$apiUrl/api/v1/search?lookfor=$lookfor&type=AllFields&field[]=id&field[]=formats&field[]=title&field[]=buildings&field[]=images&field[]=authors&field[]=year&sort=relevance%2Cid%20asc&page=$page&limit=$limit&prettyPrint=false&lng=fi&$filterStr$facetStr&facetFilter[]=building%3A0%2F.*&facetFilter[]=format%3A0%2F.*|j};
 
   Js.log(url);
   Js.Promise.(

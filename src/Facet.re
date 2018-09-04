@@ -39,7 +39,7 @@ let make =
     switch (activeFacet) {
     | Some(activeFacet) =>
       <div
-        className="pointer p-2 mr-2 text-xs uppercase pl-1 pr-1 bg-yellow-lighter rounded cursor-pointer w-auto inline-block hover:bg-red-light"
+        className="pointer mr-2 text-xs uppercase p-2 bg-grey-light rounded cursor-pointer w-auto inline-block hover:bg-red-light"
         onClick=(_e => onClearFacet(activeFacet))>
         {str(activeFacet.facet.label)}
       </div>
@@ -48,7 +48,7 @@ let make =
         onChange=(
           e => self.send(FacetClick(ReactEvent.Form.target(e)##value))
         )
-        className={"mr-2 facet " ++ facetKey}>
+        className={"w-1/3 mr-2 p-1 facet " ++ facetKey}>
         {
           ReasonReact.array(
             Array.map(

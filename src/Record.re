@@ -2,20 +2,9 @@ open Util;
 
 let component = ReasonReact.statelessComponent("Record");
 
-let make = (~record: Finna.record, ~showImages, _children) => {
+let make = (~record: Finna.record, ~onSelectFacet, ~showImages, _children) => {
   ...component,
   render: _self => {
-    let formats =
-      switch (Array.to_list(record.formats)) {
-      | [] => "&nbsp;"
-      | [translated, ..._rest] => translated.label
-      };
-
-    let buildings =
-      switch (Array.to_list(record.buildings)) {
-      | [] => "&nbsp;"
-      | [translated, ..._rest] => translated.label
-      };
     let imgs =
       switch (showImages) {
       | false => [||]
@@ -43,18 +32,19 @@ let make = (~record: Finna.record, ~showImages, _children) => {
       <a
         className="link font-hairline no-underline"
         target="_finna"
-        href={"https://finna.fi/Record/" ++ record.id}>
+        href={Finna.recordBaseUrl ++ record.id}>
         {str(record.title)}
       </a>
       year
       /* <FormatIcon record /> */
       <p>
         authors
-        <span
-          className="mr-2 text-xs formats uppercase pl-1 pr-1 bg-grey-light">
-          {str(formats)}
-        </span>
-        <span className="text-grey-darker buildings"> {str(buildings)} </span>
+        <FacetLink facetKey="format" facets={record.formats} onSelectFacet />
+        <FacetLink
+          facetKey="building"
+          facets={record.buildings}
+          onSelectFacet
+        />
         {
           switch (Array.to_list(imgs)) {
           | [] => <span />
