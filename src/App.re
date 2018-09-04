@@ -184,15 +184,27 @@ let make = _children => {
     </div>;
   },
   didMount: self => {
-    let document = Webapi.Dom.Document.asEventTarget(Webapi.Dom.document);
-    Webapi.Dom.EventTarget.addEventListener(
-      "keypress",
-      _ => {
-        let _x = [%bs.raw {| document.getElementById("search").focus() |}];
-        ();
+    /* focus search field on keypress */
+    Webapi.Dom.Element.addKeyDownEventListener(
+      e => {
+        let code = Webapi.Dom.KeyboardEvent.code(e);
+        Js.Re.fromString("Key.*")
+        |> Js.Re.exec(code)
+        |> (
+          fun
+          | Some(_result) => {
+              let _x = [%bs.raw
+                {| document.getElementById("search").focus() |}
+              ];
+              ();
+            }
+          | None => ()
+        );
       },
-      document,
+      Webapi.Dom.Document.documentElement(Webapi.Dom.document),
     );
+
+    /* initial search */
     self.send(Search(self.state.text, true));
   },
 };
