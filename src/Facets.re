@@ -31,8 +31,8 @@ let make =
                      | exception Not_found => None
                      };
                    let dummy: Finna.facet = {
-                     value: String(" k"),
-                     label: String(facetKey),
+                     value: "",
+                     label: facetKey,
                      count: 0,
                      facetType: Normal,
                    };

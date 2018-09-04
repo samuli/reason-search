@@ -8,6 +8,14 @@ type action =
 
 let component = ReasonReact.reducerComponent("Facet");
 
+let boolFacet = (onClick, value, label) =>
+  <span>
+    <label>
+      <input type_="checkbox" onClick name="foo" value />
+      {str(label)}
+    </label>
+  </span>;
+
 let make =
     (
       ~onSelectFacet,
@@ -25,7 +33,7 @@ let make =
     | FacetClick(value) =>
       switch (
         List.find(
-          (f: Finna.facet) => Finna.facetLabel(f.label) == value,
+          (f: Finna.facet) => f.label == value,
           Array.to_list(items),
         )
       ) {
@@ -44,9 +52,12 @@ let make =
         <div
           className="pointer mr-2 text-xs uppercase p-2 bg-grey-light rounded cursor-pointer w-auto inline-block hover:bg-red-light"
           onClick=(_e => onClearFacet(activeFacet))>
-          {str(Finna.facetLabel(activeFacet.facet.label))}
+          {str(activeFacet.facet.label)}
         </div>
-      | Boolean => str("bool")
+      | Boolean =>
+        <div>
+          {boolFacet(_ => onClearFacet(activeFacet), "0", facetKey)}
+        </div>
       }
 
     | None =>
@@ -61,9 +72,7 @@ let make =
             ReasonReact.array(
               Array.map(
                 (facet: Finna.facet) =>
-                  <option key={Finna.facetLabel(facet.value)}>
-                    {str(Finna.facetLabel(facet.label))}
-                  </option>,
+                  <option key={facet.value}> {str(facet.label)} </option>,
                 items,
               ),
             )
@@ -71,8 +80,7 @@ let make =
         </select>
       | Boolean =>
         <div>
-          <input type_="checkbox" name="foo" value="foo" />
-          {str("foo")}
+          {boolFacet(_ => self.send(FacetClick("1")), "1", facetKey)}
         </div>
       }
     },

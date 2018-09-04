@@ -11,10 +11,10 @@ type facetLabelVariant =
   | String(string)
   | Int(int);
 
-let facetLabel = label =>
-  switch (label) {
-  | String(label) => label
-  | Int(label) => string_of_int(label)
+let val2Str = v =>
+  switch (v) {
+  | String(v) => v
+  | Int(v) => string_of_int(v)
   };
 
 type facetType =
@@ -22,8 +22,8 @@ type facetType =
   | Boolean;
 
 type facet = {
-  value: facetLabelVariant,
-  label: facetLabelVariant,
+  value: string,
+  label: string,
   count: int,
   facetType,
 };
@@ -36,8 +36,8 @@ type filter = {
 let getFilter = (~key, ~label, ~value) => {
   key,
   facet: {
-    label: String(label),
-    value: String(value),
+    label,
+    value,
     count: 0,
     facetType: Normal,
   },
@@ -77,15 +77,13 @@ let decodeFacetLabel =
 let decodeFacetType =
   Json.Decode.(either(string |> map(_ => Normal), int |> map(_ => Boolean)));
 
-let facet = json => {
-  Js.log(json);
+let facet = json =>
   Json.Decode.{
     count: json |> field("count", int),
-    value: json |> field("value", decodeFacetLabel),
-    label: json |> field("translated", decodeFacetLabel),
+    value: json |> field("value", decodeFacetLabel) |> val2Str,
+    label: json |> field("translated", decodeFacetLabel) |> val2Str,
     facetType: json |> field("translated", decodeFacetType),
   };
-};
 
 let record = json =>
   Json.Decode.{
@@ -111,20 +109,22 @@ let result = json =>
   };
 
 let search = (lookfor, filters, page, limit, onResults) => {
-  Js.log(filters);
   let filterStr =
     Array.map(
       f => {
         let key = f.key;
-        let value = facetLabel(f.facet.value);
+        let value = f.facet.value;
         {j|filter[]=$key:"$value"|j};
       },
       filters,
     )
     |> Js.Array.joinWith("&");
+  let lng = "fi";
+  let sort = "relevance";
+
   let facetStr = "&facet[]=format&facet[]=building&facet[]=online_boolean";
 
-  let url = {j|$apiUrl/api/v1/search?lookfor=$lookfor&type=AllFields&field[]=id&field[]=formats&field[]=title&field[]=buildings&field[]=images&field[]=authors&field[]=year&sort=relevance%2Cid%20asc&page=$page&limit=$limit&prettyPrint=false&lng=fi&$filterStr$facetStr&facetFilter[]=building%3A0%2F.*&facetFilter[]=format%3A0%2F.*|j};
+  let url = {j|$apiUrl/api/v1/search?lookfor=$lookfor&type=AllFields&field[]=id&field[]=formats&field[]=title&field[]=buildings&field[]=images&field[]=authors&field[]=year&sort=$sort%2Cid%20asc&page=$page&limit=$limit&prettyPrint=false&lng=$lng&$filterStr$facetStr&facetFilter[]=building%3A0%2F.*&facetFilter[]=format%3A0%2F.*|j};
 
   Js.log(url);
   Js.Promise.(

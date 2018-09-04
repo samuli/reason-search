@@ -70,8 +70,6 @@ let make = _children => {
         ),
       )
     | Results(result) =>
-      Js.log("facets");
-      Js.log(result.facets);
       ReasonReact.Update({
         ...state,
         pageCnt: int_of_float(float_of_int(result.resultCount) /. 50.0) + 1,
@@ -82,7 +80,7 @@ let make = _children => {
           | None => state.records
           },
         loading: false,
-      });
+      })
     | ToggleImages =>
       ReasonReact.Update({...state, showImages: !state.showImages})
     | NextPage =>
