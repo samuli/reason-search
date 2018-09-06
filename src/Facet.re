@@ -1,10 +1,13 @@
 open Util;
 
 type state =
-  | ();
+  | Closed
+  | Loading
+  | Open;
 
 type action =
-  | FacetClick(string);
+  | FacetClick(string)
+  | Focus;
 
 let component = ReasonReact.reducerComponent("Facet");
 
@@ -18,69 +21,85 @@ let boolFacet = (onClick, value, label) =>
 
 let make =
     (
+      ~onGetFacets,
       ~onSelectFacet,
       ~onClearFacet,
-      ~facetKey,
-      ~facetType,
-      ~items,
-      ~activeFacet: option(Finna.filter),
+      ~facet: Finna.facet,
       _children,
     ) => {
   ...component,
-  initialState: () => (),
-  reducer: (action: action, _state: state) =>
+  initialState: () => Closed,
+  reducer: (action: action, state: state) =>
     switch (action) {
+    | Focus =>
+      switch (state) {
+      | Closed =>
+        ReasonReact.UpdateWithSideEffects(
+          Loading,
+          (_self => onGetFacets(facet.key)),
+        )
+      | _ => ReasonReact.NoUpdate
+      }
     | FacetClick(value) =>
       switch (
         List.find(
-          (f: Finna.facet) => f.label == value,
-          Array.to_list(items),
+          (f: Finna.facetItem) => f.label == value,
+          Array.to_list(facet.items),
         )
       ) {
-      | facet =>
-        let filter: Finna.filter = {key: facetKey, facet};
-        onSelectFacet(filter);
+      | selected =>
+        onSelectFacet(facet.key, selected.value);
         ReasonReact.NoUpdate;
       | exception Not_found => ReasonReact.NoUpdate
       }
     },
   render: self =>
-    switch (activeFacet) {
-    | Some(activeFacet) =>
-      switch ((facetType: Finna.facetType)) {
+    switch (facet.selected) {
+    | Value(selectedValue) =>
+      switch (facet.facetType) {
       | Normal =>
         <div
           className="pointer mr-2 text-xs uppercase p-2 bg-grey-light rounded cursor-pointer w-auto inline-block hover:bg-red-light"
-          onClick=(_e => onClearFacet(activeFacet))>
-          {str(activeFacet.facet.label)}
+          onClick=(_e => onClearFacet(facet.key))>
+          {str(selectedValue)}
         </div>
       | Boolean =>
         <div>
-          {boolFacet(_ => onClearFacet(activeFacet), "0", facetKey)}
+          {boolFacet(_ => onClearFacet(facet.key), "0", selectedValue)}
         </div>
       }
 
     | None =>
-      switch ((facetType: Finna.facetType)) {
+      switch (facet.facetType) {
       | Normal =>
-        <select
-          onChange=(
-            e => self.send(FacetClick(ReactEvent.Form.target(e)##value))
-          )
-          className={"w-1/3 mr-2 p-1 facet " ++ facetKey}>
-          {
-            ReasonReact.array(
-              Array.map(
-                (facet: Finna.facet) =>
-                  <option key={facet.value}> {str(facet.label)} </option>,
-                items,
-              ),
+        <div>
+          <p> {str(facet.key)} </p>
+          <select
+            onFocus=(
+              _ => {
+                self.send(Focus);
+                Js.log("focus");
+              }
             )
-          }
-        </select>
+            onClick=(_ => Js.log("click"))
+            onChange=(
+              e => self.send(FacetClick(ReactEvent.Form.target(e)##value))
+            )
+            className={"w-1/3 mr-2 p-1 facet " ++ facet.key}>
+            {
+              ReasonReact.array(
+                Array.map(
+                  (facet: Finna.facetItem) =>
+                    <option key={facet.value}> {str(facet.label)} </option>,
+                  facet.items,
+                ),
+              )
+            }
+          </select>
+        </div>
       | Boolean =>
         <div>
-          {boolFacet(_ => self.send(FacetClick("1")), "1", facetKey)}
+          {boolFacet(_ => self.send(FacetClick("1")), "1", facet.key)}
         </div>
       }
     },

@@ -21,27 +21,61 @@ type facetType =
   | Normal
   | Boolean;
 
-type facet = {
+type facetValue =
+  | None
+  | Value(string);
+
+type facetItem = {
   value: string,
   label: string,
   count: int,
-  facetType,
 };
-
-type filter = {
+type facet = {
   key: string,
-  facet,
+  facetType,
+  selected: facetValue,
+  items: array(facetItem),
 };
 
-let getFilter = (~key, ~label, ~value) => {
-  key,
-  facet: {
-    label,
-    value,
-    count: 0,
+/* type filter = { */
+/*   label: string, */
+/*   key: string, */
+/*   value: string, */
+/* }; */
+
+let getInitialFacets = () => {
+  let facets = Js.Dict.empty();
+  let facet = {key: "format", facetType: Normal, items: [||], selected: None};
+  Js.Dict.set(facets, "format", facet);
+
+  let facet = {
+    key: "building",
     facetType: Normal,
-  },
+    items: [||],
+    selected: None,
+  };
+  Js.Dict.set(facets, "building", facet);
+
+  let facet = {
+    key: "online_boolean",
+    facetType: Boolean,
+    items: [||],
+    selected: None,
+  };
+  Js.Dict.set(facets, "online_boolean", facet);
+
+  facets;
 };
+
+/* let getFilter = (~key, ~label, ~value) => { */
+/*   key, */
+/*   facet: { */
+/*     label, */
+/*     value, */
+/*     count: 0, */
+/*     facetType: Normal, */
+/*   }, */
+/* }; */
 
 type author = {
   name: string,
@@ -59,7 +93,14 @@ type record = {
 
 type result = {
   records: option(array(record)),
-  facets: option(Js.Dict.t(array(facet))),
+  facets: option(Js.Dict.t(array(facetItem))),
+  resultCount: int,
+  status: string,
+};
+
+type resultProcessed = {
+  records: option(array(record)),
+  facets: Js.Dict.t(facet),
   resultCount: int,
   status: string,
 };
@@ -77,12 +118,12 @@ let decodeFacetLabel =
 let decodeFacetType =
   Json.Decode.(either(string |> map(_ => Normal), int |> map(_ => Boolean)));
 
-let facet = json =>
+let decodeFacetItem = json =>
   Json.Decode.{
     count: json |> field("count", int),
     value: json |> field("value", decodeFacetLabel) |> val2Str,
     label: json |> field("translated", decodeFacetLabel) |> val2Str,
-    facetType: json |> field("translated", decodeFacetType),
+    /* facetType: json |> field("translated", decodeFacetType), */
   };
 
 let record = json =>
@@ -100,39 +141,90 @@ let record = json =>
     year: json |> optional(field("year", string)),
   };
 
-let result = json =>
+let result = (json: Js.Json.t): result =>
   Json.Decode.{
     records: json |> optional(field("records", array(record))),
     resultCount: json |> field("resultCount", int),
-    facets: json |> optional(field("facets", dict(array(facet)))),
+    facets:
+      json |> optional(field("facets", dict(array(decodeFacetItem)))),
     status: json |> field("status", string),
   };
 
-let search = (lookfor, filters, page, limit, onResults) => {
+let processFacets = facets =>
+  switch (facets) {
+  | Some(facets) =>
+    let newDict = Js.Dict.empty();
+    Array.iter(
+      facetKey =>
+        switch (Js.Dict.get(facets, facetKey)) {
+        | Some(items) =>
+          let facet = {
+            key: facetKey,
+            facetType: Normal,
+            items,
+            selected: None,
+          };
+          Js.Dict.set(newDict, facetKey, facet);
+        | None => ()
+        },
+      Js.Dict.keys(facets),
+    );
+    newDict;
+  | None => Js.Dict.empty()
+  };
+
+let processResults = (results: result) => {
+  let res: resultProcessed = {
+    facets: processFacets(results.facets),
+    records: results.records,
+    resultCount: results.resultCount,
+    status: results.status,
+  };
+  res;
+};
+
+let search = (~lookfor, ~facets, ~page, ~limit, ~onResults) => {
   let filterStr =
-    Array.map(
-      f => {
-        let key = f.key;
-        let value = f.facet.value;
-        {j|filter[]=$key:"$value"|j};
-      },
-      filters,
-    )
+    facets
+    |> Js.Dict.values
+    |> Array.map(f => {
+         let key = f.key;
+         switch (f.selected) {
+         | None => ""
+         | Value(value) => {j|filter[]=$key:"$value"&facet[]=$key&facetFilter[]=$key%3A0%2F.*|j}
+         };
+       })
     |> Js.Array.joinWith("&");
   let lng = "fi";
   let sort = "relevance";
 
-  let facetStr = "&facet[]=format&facet[]=building&facet[]=online_boolean";
+  /* let facetStr = */
+  /*   switch (facetKey) { */
+  /*   | None => "" */
+  /*   | Some(_k) => "&facet[]=$k&facetFilter[]=$key%3A0%2F.*" */
+  /*   }; */
+  /* "&facet[]=format&facet[]=building&facet[]=online_boolean"; */
 
-  let url = {j|$apiUrl/api/v1/search?lookfor=$lookfor&type=AllFields&field[]=id&field[]=formats&field[]=title&field[]=buildings&field[]=images&field[]=authors&field[]=year&sort=$sort%2Cid%20asc&page=$page&limit=$limit&prettyPrint=false&lng=$lng&$filterStr$facetStr&facetFilter[]=building%3A0%2F.*&facetFilter[]=format%3A0%2F.*|j};
+  let url = {j|$apiUrl/api/v1/search?lookfor=$lookfor&type=AllFields&field[]=id&field[]=formats&field[]=title&field[]=buildings&field[]=images&field[]=authors&field[]=year&sort=$sort%2Cid%20asc&page=$page&limit=$limit&prettyPrint=false&lng=$lng&$filterStr|j};
 
   Js.log(url);
   Js.Promise.(
     Fetch.fetch(url)
     |> then_(Fetch.Response.text)
     |> then_(text =>
-         text |> Json.parseOrRaise |> result |> onResults |> resolve
+         text
+         |> Json.parseOrRaise
+         |> result
+         |> processResults
+         |> onResults
+         |> resolve
        )
     |> ignore
   );
 };
+
+/* let search = (lookfor, filters, page, onResults) => */
+/*   doSearch(lookfor, filters, page, 50, onResults); */
+
+/* let getFacets = (~lookfor, ~filters, ~page, ~facetKey, ~onResults) => */
+/*   doSearch(lookfor, filters, page, 0, onResults, ~facetKey); */

@@ -8,25 +8,36 @@ type searchState =
 type state = {
   loading: bool,
   text: string,
-  result: Finna.result,
+  result: Finna.resultProcessed,
   records: array(Finna.record),
   page: int,
   pageCnt: int,
   showImages: bool,
   limit: int,
-  filters: array(Finna.filter),
+  facets: Js.Dict.t(Finna.facet),
 };
 
 type action =
   | Search(string, bool)
-  | Results(Finna.result)
+  | Results(Finna.resultProcessed)
   | ToggleImages
   | NextPage
-  | FacetResults(Finna.filter)
-  | ClearFacet(Finna.filter)
+  | GetFacets(string)
+  | ReceiveFacets(string, array(Finna.facetItem))
+  | FacetResults(string, string)
+  | ClearFacet(string)
   | ClearFilters;
 
 let component = ReasonReact.reducerComponent("App");
+
+let setFacet =
+    (facets: Js.Dict.t(Finna.facet), facetKey, facetValue: Finna.facetValue) =>
+  switch (Js.Dict.get(facets, facetKey)) {
+  | Some(facet) =>
+    Js.Dict.set(facets, facetKey, {...facet, selected: facetValue});
+    facets;
+  | None => facets
+  };
 
 let make = _children => {
   ...component,
@@ -35,16 +46,16 @@ let make = _children => {
     text: "mauri kunnas",
     result: {
       records: Some([||]),
+      facets: Js.Dict.empty(),
       resultCount: 0,
       status: "foo",
-      facets: None,
     },
     page: 1,
     limit: 50,
     pageCnt: 0,
     showImages: false,
     records: [||],
-    filters: [||],
+    facets: Finna.getInitialFacets(),
   },
   reducer: (action: action, state: state) =>
     switch (action) {
@@ -60,11 +71,11 @@ let make = _children => {
         (
           self =>
             Finna.search(
-              self.state.text,
-              self.state.filters,
-              self.state.page,
-              self.state.limit,
-              results =>
+              ~lookfor=self.state.text,
+              ~facets=self.state.facets,
+              ~page=self.state.page,
+              ~limit=self.state.limit,
+              ~onResults=results =>
               self.send(Results(results))
             )
         ),
@@ -88,28 +99,32 @@ let make = _children => {
         {...state, page: state.page + 1},
         (self => self.send(Search(state.text, false))),
       )
-    | FacetResults(filter) =>
-      ReasonReact.UpdateWithSideEffects(
-        {...state, filters: Array.append(state.filters, [|filter|])},
-        (self => self.send(Search(state.text, true))),
-      )
-    | ClearFacet(filter) =>
+    | GetFacets(facetKey) =>
+      {
+        Js.log("get: " ++ facetKey);
+        ReasonReact.UpdateWithSideEffects(
+          state,
+          (self => self.send(Search(state.text, false))),
+        );
+      };
+      ReasonReact.NoUpdate;
+    | ReceiveFacets(facetKey, facets) => ReasonReact.NoUpdate
+    | FacetResults(facetKey, value) =>
       ReasonReact.UpdateWithSideEffects(
         {
           ...state,
-          filters:
-            Array.of_list(
-              List.filter(
-                (f: Finna.filter) => f.key != filter.key,
-                Array.to_list(state.filters),
-              ),
-            ),
+          facets: setFacet(state.facets, facetKey, Finna.Value(value)),
         },
+        (self => self.send(Search(state.text, true))),
+      )
+    | ClearFacet(facetKey) =>
+      ReasonReact.UpdateWithSideEffects(
+        {...state, facets: setFacet(state.facets, facetKey, Finna.None)},
         (self => self.send(Search(state.text, true))),
       )
     | ClearFilters =>
       ReasonReact.UpdateWithSideEffects(
-        {...state, filters: [||]},
+        {...state, facets: Finna.getInitialFacets()},
         (self => self.send(Search(state.text, true))),
       )
     },
@@ -122,21 +137,16 @@ let make = _children => {
         type_="checkbox"
         onChange={_ => self.send(ToggleImages)}
       />
-      {
-        let facets =
-          switch (self.state.result.facets) {
-          | Some(facets) => facets
-          | None => Js.Dict.empty()
-          };
-
-        <Facets
-          facets
-          activeFacets={self.state.filters}
-          onSelectFacet={filter => self.send(FacetResults(filter))}
-          onClearFacet={filter => self.send(ClearFacet(filter))}
-          onClearFilters={_ => self.send(ClearFilters)}
-        />;
-      }
+      <Facets
+        facets={self.state.facets}
+        onGetFacets={facetKey => self.send(GetFacets(facetKey))}
+        onSelectFacet={
+          (facetKey, facetValue) =>
+            self.send(FacetResults(facetKey, facetValue))
+        }
+        onClearFacet={filter => self.send(ClearFacet(filter))}
+        onClearFilters={_ => self.send(ClearFilters)}
+      />
       {
         self.state.loading ?
           ReasonReact.null :
@@ -147,26 +157,26 @@ let make = _children => {
       <ul className="results mt-5 list-reset">
         {
           switch (self.state.result.resultCount) {
-          | 0 =>
-            <div>
-              <p> {str("No results")} </p>
-              {
-                switch (Array.length(self.state.filters)) {
-                | 0 => ReasonReact.null
-                | _ =>
-                  <div onClick=(_ => self.send(ClearFilters))>
-                    {str("Remove filters")}
-                  </div>
-                }
-              }
-            </div>
+          | 0 => <div> <p> {str("No results")} </p> </div>
+          /* { */
+          /*   switch (Array.length(self.state.filters)) { */
+          /*   | 0 => ReasonReact.null */
+          /*   | _ => */
+          /*     <div onClick=(_ => self.send(ClearFilters))> */
+          /*       {str("Remove filters")} */
+          /*     </div> */
+          /*   } */
+          /* } */
           | _ =>
             ReasonReact.array(
               Array.map(
                 (r: Finna.record) =>
                   <Record
                     record=r
-                    onSelectFacet={filter => self.send(FacetResults(filter))}
+                    onSelectFacet={
+                      (facetKey, facetValue) =>
+                        self.send(FacetResults(facetKey, facetValue))
+                    }
                     showImages={self.state.showImages}
                   />,
                 self.state.records,

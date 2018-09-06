@@ -39,12 +39,24 @@ let make = (~record: Finna.record, ~onSelectFacet, ~showImages, _children) => {
       /* <FormatIcon record /> */
       <p>
         authors
-        <FacetLink facetKey="format" facets={record.formats} onSelectFacet />
-        <FacetLink
-          facetKey="building"
-          facets={record.buildings}
-          onSelectFacet
-        />
+        {
+          let facet = List.hd(Array.to_list(record.formats));
+          <FacetLink
+            label={facet.label}
+            facetKey="format"
+            value={facet.value}
+            onSelect=onSelectFacet
+          />;
+        }
+        {
+          let facet = List.hd(Array.to_list(record.buildings));
+          <FacetLink
+            label={facet.label}
+            facetKey="building"
+            value={facet.value}
+            onSelect=onSelectFacet
+          />;
+        }
         {
           switch (Array.to_list(imgs)) {
           | [] => <span />
