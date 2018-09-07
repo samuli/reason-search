@@ -33,10 +33,13 @@ type facetItem = {
 type facet = {
   key: string,
   facetType,
-  selected: facetValue,
+  value: facetValue,
   items: array(facetItem),
 };
-
+type filter = {
+  key: string,
+  value: string,
+};
 /* type filter = { */
 /*   label: string, */
 /*   key: string, */
@@ -45,22 +48,27 @@ type facet = {
 
 let getInitialFacets = () => {
   let facets = Js.Dict.empty();
-  let facet = {key: "format", facetType: Normal, items: [||], selected: None};
+  let facet: facet = {
+    key: "format",
+    facetType: Normal,
+    items: [||],
+    value: None,
+  };
   Js.Dict.set(facets, "format", facet);
 
-  let facet = {
+  let facet: facet = {
     key: "building",
     facetType: Normal,
     items: [||],
-    selected: None,
+    value: None,
   };
   Js.Dict.set(facets, "building", facet);
 
-  let facet = {
+  let facet: facet = {
     key: "online_boolean",
     facetType: Boolean,
     items: [||],
-    selected: None,
+    value: None,
   };
   Js.Dict.set(facets, "online_boolean", facet);
 
@@ -158,11 +166,11 @@ let processFacets = facets =>
       facetKey =>
         switch (Js.Dict.get(facets, facetKey)) {
         | Some(items) =>
-          let facet = {
+          let facet: facet = {
             key: facetKey,
             facetType: Normal,
             items,
-            selected: None,
+            value: None,
           };
           Js.Dict.set(newDict, facetKey, facet);
         | None => ()
@@ -183,16 +191,13 @@ let processResults = (results: result) => {
   res;
 };
 
-let search = (~lookfor, ~facets, ~page, ~limit, ~onResults) => {
+let search = (~lookfor, ~filters, ~page, ~limit, ~onResults) => {
   let filterStr =
-    facets
-    |> Js.Dict.values
-    |> Array.map(f => {
+    filters
+    |> Array.map((f: filter) => {
          let key = f.key;
-         switch (f.selected) {
-         | None => ""
-         | Value(value) => {j|filter[]=$key:"$value"&facet[]=$key&facetFilter[]=$key%3A0%2F.*|j}
-         };
+         let value = f.value;
+         {j|filter[]=$key:"$value"&facet[]=$key&facetFilter[]=$key%3A0%2F.*|j};
        })
     |> Js.Array.joinWith("&");
   let lng = "fi";

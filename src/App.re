@@ -34,7 +34,7 @@ let setFacet =
     (facets: Js.Dict.t(Finna.facet), facetKey, facetValue: Finna.facetValue) =>
   switch (Js.Dict.get(facets, facetKey)) {
   | Some(facet) =>
-    Js.Dict.set(facets, facetKey, {...facet, selected: facetValue});
+    Js.Dict.set(facets, facetKey, {...facet, value: facetValue});
     facets;
   | None => facets
   };
@@ -60,6 +60,33 @@ let make = _children => {
   reducer: (action: action, state: state) =>
     switch (action) {
     | Search(text, newSearch) =>
+      let values = Js.Dict.values(state.facets);
+      let filterDummy: Finna.filter = {key: "", value: ""};
+      let filters = ArrayLabels.make(Array.length(values), filterDummy);
+      Array.iteri(
+        (i, facet: Finna.facet) =>
+          switch (facet.value) {
+          | None => ()
+          | Value(value) =>
+            let filter: Finna.filter = {key: facet.key, value};
+            filters[i] = filter;
+          },
+        values,
+      );
+
+      Js.log(filters);
+
+      let activeFilters =
+        List.filter(
+          (f: Finna.filter) =>
+            switch (f.key) {
+            | "" => false
+            | _ => true
+            },
+          Array.to_list(filters),
+        );
+      Js.log(activeFilters);
+
       ReasonReact.UpdateWithSideEffects(
         {
           ...state,
@@ -72,14 +99,14 @@ let make = _children => {
           self =>
             Finna.search(
               ~lookfor=self.state.text,
-              ~facets=self.state.facets,
+              ~filters=Array.of_list(activeFilters),
               ~page=self.state.page,
               ~limit=self.state.limit,
               ~onResults=results =>
               self.send(Results(results))
             )
         ),
-      )
+      );
     | Results(result) =>
       ReasonReact.Update({
         ...state,
@@ -100,14 +127,23 @@ let make = _children => {
         (self => self.send(Search(state.text, false))),
       )
     | GetFacets(facetKey) =>
-      {
-        Js.log("get: " ++ facetKey);
-        ReasonReact.UpdateWithSideEffects(
-          state,
-          (self => self.send(Search(state.text, false))),
-        );
-      };
+      Js.log("get: " ++ facetKey);
       ReasonReact.NoUpdate;
+    /* ReasonReact.UpdateWithSideEffects( */
+    /*   state, */
+    /*   ( */
+    /*     self => */
+    /*       Finna.search( */
+    /*         ~lookfor=self.state.text, */
+    /*         ~facets=self.state.facets, */
+    /*         ~page=self.state.page, */
+    /*         ~limit=self.state.limit, */
+    /*         ~onResults=results => */
+    /*         self.send(ReceiveFacets(facetKey, results)) */
+    /*       ) */
+    /*   ), */
+    /* ); */
+
     | ReceiveFacets(facetKey, facets) => ReasonReact.NoUpdate
     | FacetResults(facetKey, value) =>
       ReasonReact.UpdateWithSideEffects(

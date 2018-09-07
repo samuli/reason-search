@@ -54,7 +54,7 @@ let make =
       }
     },
   render: self =>
-    switch (facet.selected) {
+    switch (facet.value) {
     | Value(selectedValue) =>
       switch (facet.facetType) {
       | Normal =>
