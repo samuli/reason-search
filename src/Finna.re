@@ -40,11 +40,6 @@ type filter = {
   key: string,
   value: string,
 };
-/* type filter = { */
-/*   label: string, */
-/*   key: string, */
-/*   value: string, */
-/* }; */
 
 let getInitialFacets = () => {
   let facets = Js.Dict.empty();
@@ -74,16 +69,6 @@ let getInitialFacets = () => {
 
   facets;
 };
-
-/* let getFilter = (~key, ~label, ~value) => { */
-/*   key, */
-/*   facet: { */
-/*     label, */
-/*     value, */
-/*     count: 0, */
-/*     facetType: Normal, */
-/*   }, */
-/* }; */
 
 type author = {
   name: string,
@@ -202,13 +187,6 @@ let search = (~lookfor, ~filters, ~page, ~limit, ~onResults) => {
     |> Js.Array.joinWith("&");
   let lng = "fi";
   let sort = "relevance";
-
-  /* let facetStr = */
-  /*   switch (facetKey) { */
-  /*   | None => "" */
-  /*   | Some(_k) => "&facet[]=$k&facetFilter[]=$key%3A0%2F.*" */
-  /*   }; */
-  /* "&facet[]=format&facet[]=building&facet[]=online_boolean"; */
 
   let url = {j|$apiUrl/api/v1/search?lookfor=$lookfor&type=AllFields&field[]=id&field[]=formats&field[]=title&field[]=buildings&field[]=images&field[]=authors&field[]=year&sort=$sort%2Cid%20asc&page=$page&limit=$limit&prettyPrint=false&lng=$lng&$filterStr|j};
 
