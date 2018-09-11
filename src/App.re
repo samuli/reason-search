@@ -56,8 +56,6 @@ let getActiveFilters = facets => {
     values,
   );
 
-  Js.log(filters);
-
   let activeFilters =
     List.filter(
       (f: Finna.filter) =>
@@ -67,7 +65,6 @@ let getActiveFilters = facets => {
         },
       Array.to_list(filters),
     );
-  Js.log(activeFilters);
 
   Array.of_list(activeFilters);
 };
@@ -174,8 +171,6 @@ let make = _children => {
         (self => self.send(Search(state.text, false))),
       )
     | GetFacets(facetKey) =>
-      Js.log("get: " ++ facetKey);
-      /* ReasonReact.NoUpdate; */
       ReasonReact.UpdateWithSideEffects(
         state,
         (
@@ -189,17 +184,15 @@ let make = _children => {
               self.send(ReceiveFacets(facetKey, results))
             )
         ),
-      );
+      )
     | ReceiveFacets(facetKey, results) =>
-      Js.log("receive");
-      Js.log(results.facets);
       switch (Js.Dict.get(results.facets, facetKey)) {
       | Some(facetItem) =>
         let facets = state.facets;
         Js.Dict.set(facets, facetKey, facetItem);
         ReasonReact.Update({...state, facets});
       | None => ReasonReact.NoUpdate
-      };
+      }
     | FacetResults(facetKey, value) =>
       ReasonReact.UpdateWithSideEffects(
         {
@@ -221,10 +214,7 @@ let make = _children => {
     },
   render: self => {
     let resultCnt = self.state.result.resultCount;
-    let opt = ReactSelect.selectOption(~label="labeli", ~value="valuee");
-    Js.log([|opt, opt, opt, opt, opt, opt|]);
     <div className="p-5">
-      <ReactSelect options=[|opt, opt, opt, opt, opt, opt|] />
       <SearchField onSearch={text => self.send(Search(text, true))} />
       <input
         checked={self.state.showImages}
@@ -287,28 +277,26 @@ let make = _children => {
       />
     </div>;
   },
-  didMount: self => {
+  didMount: self =>
     /* focus search field on keypress */
-    Webapi.Dom.Element.addKeyDownEventListener(
-      e => {
-        let code = Webapi.Dom.KeyboardEvent.code(e);
-        Js.Re.fromString("Key.*")
-        |> Js.Re.exec(code)
-        |> (
-          fun
-          | Some(_result) => {
-              let _x = [%bs.raw
-                {| document.getElementById("search").focus() |}
-              ];
-              ();
-            }
-          | None => ()
-        );
-      },
-      Webapi.Dom.Document.documentElement(Webapi.Dom.document),
-    );
-
+    /* Webapi.Dom.Element.addKeyDownEventListener( */
+    /*   e => { */
+    /*     let code = Webapi.Dom.KeyboardEvent.code(e); */
+    /*     Js.Re.fromString("Key.*") */
+    /*     |> Js.Re.exec(code) */
+    /*     |> ( */
+    /*       fun */
+    /*       | Some(_result) => { */
+    /*           let _x = [%bs.raw */
+    /*             {| document.getElementById("search").focus() |} */
+    /*           ]; */
+    /*           (); */
+    /*         } */
+    /*       | None => () */
+    /*     ); */
+    /*   }, */
+    /*   Webapi.Dom.Document.documentElement(Webapi.Dom.document), */
+    /* ); */
     /* initial search */
-    self.send(Search(self.state.text, true));
-  },
+    self.send(Search(self.state.text, true)),
 };

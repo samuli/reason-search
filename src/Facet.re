@@ -6,7 +6,7 @@ type state =
   | Open;
 
 type action =
-  | FacetClick(string)
+  | FacetClick(ReactSelect.selectOption, string)
   | Focus;
 
 let component = ReasonReact.reducerComponent("Facet");
@@ -40,18 +40,9 @@ let make =
         )
       | _ => ReasonReact.NoUpdate
       }
-    | FacetClick(value) =>
-      switch (
-        List.find(
-          (f: Finna.facetItem) => f.label == value,
-          Array.to_list(facet.items),
-        )
-      ) {
-      | selected =>
-        onSelectFacet(facet.key, selected.value);
-        ReasonReact.Update(Closed);
-      | exception Not_found => ReasonReact.NoUpdate
-      }
+    | FacetClick(obj, _action) =>
+      onSelectFacet(facet.key, ReactSelect.valueGet(obj));
+      ReasonReact.Update(Closed);
     },
   render: self =>
     switch (facet.value) {
@@ -72,39 +63,41 @@ let make =
     | None =>
       switch (facet.facetType) {
       | Normal =>
+        let options =
+          Array.map(
+            (facet: Finna.facetItem) => {
+              let label = facet.label;
+              let _count = facet.count;
+              let value = facet.value;
+              ReactSelect.selectOption(~label, ~value);
+            },
+            facet.items,
+          );
         <div>
           <p> {str(facet.key)} </p>
-          <select
-            onFocus=(
-              _ => {
-                self.send(Focus);
-                Js.log("focus");
-              }
+          <ReactSelect
+            options
+            onFocus=((_a, _b) => self.send(Focus))
+            onChange=(
+              (obj: ReactSelect.selectOption, action) =>
+                self.send(FacetClick(obj, action))
             )
-            onClick=(_e => Js.log("click"))
-            onChange=(e => Js.log(ReactEvent.Form.target(e)##label))
-            className={"w-1/3 mr-2 p-1 facet " ++ facet.key}>
-            {
-              ReasonReact.array(
-                Array.map(
-                  (facet: Finna.facetItem) => {
-                    let label = facet.label;
-                    let count = facet.count;
-                    <option
-                      key={facet.value} onClick={_ => Js.log("option click")}>
-                      {str({j|$label ($count)|j})}
-                    </option>;
-                  },
-                  facet.items,
-                ),
-              )
-            }
-          </select>
-        </div>
+          />
+        </div>;
       | Boolean =>
-        <div>
-          {boolFacet(_ => self.send(FacetClick("1")), "1", facet.key)}
-        </div>
+        <div
+          /* {boolFacet(_ => self.send(FacetClick("1")), "1", facet.key)} */
+        />
       }
     },
 };
+
+/* className={"w-1/3 mr-2 p-1 facet " ++ facet.key} */
+/* onFocus=( */
+/*   _ => { */
+/*     self.send(Focus); */
+/*     Js.log("focus"); */
+/*   } */
+/* ) */
+/* onClick=(_e => Js.log("click")) */
+/* onChange=(e => Js.log(ReactEvent.Form.target(e)##label)) */

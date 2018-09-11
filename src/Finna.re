@@ -188,14 +188,9 @@ let search = (~lookfor, ~filters, ~page, ~limit, ~onResults, ~facetKey=?, ()) =>
 
   let facetStr =
     switch (facetKey) {
-    | None =>
-      Js.log("no facet");
-      "";
+    | None => ""
     | _ => {j|&facet[]=$facetKey&facetFilter[]=$facetKey%3A0%2F.*|j}
     };
-
-  Js.log("facetkey:");
-  Js.log(facetKey);
 
   let url = {j|$apiUrl/api/v1/search?lookfor=$lookfor&type=AllFields&field[]=id&field[]=formats&field[]=title&field[]=buildings&field[]=images&field[]=authors&field[]=year&sort=$sort%2Cid%20asc&page=$page&limit=$limit&prettyPrint=false&lng=$lng$facetStr&$filterStr|j};
 
