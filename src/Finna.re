@@ -108,15 +108,12 @@ let decodeFacetLabel =
   Json.Decode.(
     either(string |> map(s => String(s)), int |> map(i => Int(i)))
   );
-let decodeFacetType =
-  Json.Decode.(either(string |> map(_ => Normal), int |> map(_ => Boolean)));
 
 let decodeFacetItem = json =>
   Json.Decode.{
     count: json |> field("count", int),
     value: json |> field("value", decodeFacetLabel) |> val2Str,
     label: json |> field("translated", decodeFacetLabel) |> val2Str,
-    /* facetType: json |> field("translated", decodeFacetType), */
   };
 
 let record = json =>
@@ -151,12 +148,12 @@ let processFacets = facets =>
       facetKey =>
         switch (Js.Dict.get(facets, facetKey)) {
         | Some(items) =>
-          let facet: facet = {
-            key: facetKey,
-            facetType: Normal,
-            items,
-            value: None,
-          };
+          let facetType =
+            switch (Array.length(items)) {
+            | 1 => Boolean
+            | _ => Normal
+            };
+          let facet: facet = {key: facetKey, facetType, items, value: None};
           Js.Dict.set(newDict, facetKey, facet);
         | None => ()
         },
@@ -176,19 +173,31 @@ let processResults = (results: result) => {
   res;
 };
 
-let search = (~lookfor, ~filters, ~page, ~limit, ~onResults) => {
+let search = (~lookfor, ~filters, ~page, ~limit, ~onResults, ~facetKey=?, ()) => {
   let filterStr =
     filters
     |> Array.map((f: filter) => {
          let key = f.key;
          let value = f.value;
-         {j|filter[]=$key:"$value"&facet[]=$key&facetFilter[]=$key%3A0%2F.*|j};
+         {j|filter[]=$key:"$value"|j};
        })
     |> Js.Array.joinWith("&");
+
   let lng = "fi";
   let sort = "relevance";
 
-  let url = {j|$apiUrl/api/v1/search?lookfor=$lookfor&type=AllFields&field[]=id&field[]=formats&field[]=title&field[]=buildings&field[]=images&field[]=authors&field[]=year&sort=$sort%2Cid%20asc&page=$page&limit=$limit&prettyPrint=false&lng=$lng&$filterStr|j};
+  let facetStr =
+    switch (facetKey) {
+    | None =>
+      Js.log("no facet");
+      "";
+    | _ => {j|&facet[]=$facetKey&facetFilter[]=$facetKey%3A0%2F.*|j}
+    };
+
+  Js.log("facetkey:");
+  Js.log(facetKey);
+
+  let url = {j|$apiUrl/api/v1/search?lookfor=$lookfor&type=AllFields&field[]=id&field[]=formats&field[]=title&field[]=buildings&field[]=images&field[]=authors&field[]=year&sort=$sort%2Cid%20asc&page=$page&limit=$limit&prettyPrint=false&lng=$lng$facetStr&$filterStr|j};
 
   Js.log(url);
   Js.Promise.(
@@ -206,8 +215,5 @@ let search = (~lookfor, ~filters, ~page, ~limit, ~onResults) => {
   );
 };
 
-/* let search = (lookfor, filters, page, onResults) => */
-/*   doSearch(lookfor, filters, page, 50, onResults); */
-
-/* let getFacets = (~lookfor, ~filters, ~page, ~facetKey, ~onResults) => */
-/*   doSearch(lookfor, filters, page, 0, onResults, ~facetKey); */
+let getFacets = (~lookfor, ~filters, ~page, ~facetKey, ~onResults) =>
+  search(~lookfor, ~filters, ~page, ~limit=0, ~onResults, ~facetKey, ());

@@ -1,3 +1,5 @@
+[%%debugger.chrome];
+
 open Util;
 
 type searchState =
@@ -23,7 +25,7 @@ type action =
   | ToggleImages
   | NextPage
   | GetFacets(string)
-  | ReceiveFacets(string, array(Finna.facetItem))
+  | ReceiveFacets(string, Finna.resultProcessed)
   | FacetResults(string, string)
   | ClearFacet(string)
   | ClearFilters;
@@ -38,6 +40,37 @@ let setFacet =
     facets;
   | None => facets
   };
+
+let getActiveFilters = facets => {
+  let values = Js.Dict.values(facets);
+  let filterDummy: Finna.filter = {key: "", value: ""};
+  let filters = ArrayLabels.make(Array.length(values), filterDummy);
+  Array.iteri(
+    (i, facet: Finna.facet) =>
+      switch (facet.value) {
+      | None => ()
+      | Value(value) =>
+        let filter: Finna.filter = {key: facet.key, value};
+        filters[i] = filter;
+      },
+    values,
+  );
+
+  Js.log(filters);
+
+  let activeFilters =
+    List.filter(
+      (f: Finna.filter) =>
+        switch (f.key) {
+        | "" => false
+        | _ => true
+        },
+      Array.to_list(filters),
+    );
+  Js.log(activeFilters);
+
+  Array.of_list(activeFilters);
+};
 
 let make = _children => {
   ...component,
@@ -60,32 +93,32 @@ let make = _children => {
   reducer: (action: action, state: state) =>
     switch (action) {
     | Search(text, newSearch) =>
-      let values = Js.Dict.values(state.facets);
-      let filterDummy: Finna.filter = {key: "", value: ""};
-      let filters = ArrayLabels.make(Array.length(values), filterDummy);
-      Array.iteri(
-        (i, facet: Finna.facet) =>
-          switch (facet.value) {
-          | None => ()
-          | Value(value) =>
-            let filter: Finna.filter = {key: facet.key, value};
-            filters[i] = filter;
-          },
-        values,
-      );
+      /* let values = Js.Dict.values(state.facets); */
+      /* let filterDummy: Finna.filter = {key: "", value: ""}; */
+      /* let filters = ArrayLabels.make(Array.length(values), filterDummy); */
+      /* Array.iteri( */
+      /*   (i, facet: Finna.facet) => */
+      /*     switch (facet.value) { */
+      /*     | None => () */
+      /*     | Value(value) => */
+      /*       let filter: Finna.filter = {key: facet.key, value}; */
+      /*       filters[i] = filter; */
+      /*     }, */
+      /*   values, */
+      /* ); */
 
-      Js.log(filters);
+      /* Js.log(filters); */
 
-      let activeFilters =
-        List.filter(
-          (f: Finna.filter) =>
-            switch (f.key) {
-            | "" => false
-            | _ => true
-            },
-          Array.to_list(filters),
-        );
-      Js.log(activeFilters);
+      /* let activeFilters = */
+      /*   List.filter( */
+      /*     (f: Finna.filter) => */
+      /*       switch (f.key) { */
+      /*       | "" => false */
+      /*       | _ => true */
+      /*       }, */
+      /*     Array.to_list(filters), */
+      /*   ); */
+      /* Js.log(activeFilters); */
 
       ReasonReact.UpdateWithSideEffects(
         {
@@ -99,15 +132,28 @@ let make = _children => {
           self =>
             Finna.search(
               ~lookfor=self.state.text,
-              ~filters=Array.of_list(activeFilters),
+              ~filters=getActiveFilters(state.facets),
               ~page=self.state.page,
               ~limit=self.state.limit,
-              ~onResults=results =>
-              self.send(Results(results))
+              /* ~facetKey=None, */
+              ~onResults=results => self.send(Results(results)),
+              (),
             )
         ),
-      );
+      )
     | Results(result) =>
+      let newFacets = Finna.getInitialFacets();
+
+      let _foo =
+        state.facets
+        |> Js.Dict.values
+        |> Array.iter((facet: Finna.facet) =>
+             switch (facet.value) {
+             | Value(_value) => Js.Dict.set(newFacets, facet.key, facet)
+             | None => ()
+             }
+           );
+
       ReasonReact.Update({
         ...state,
         pageCnt: int_of_float(float_of_int(result.resultCount) /. 50.0) + 1,
@@ -117,8 +163,9 @@ let make = _children => {
           | Some(records) => Array.append(state.records, records)
           | None => state.records
           },
+        facets: newFacets,
         loading: false,
-      })
+      });
     | ToggleImages =>
       ReasonReact.Update({...state, showImages: !state.showImages})
     | NextPage =>
@@ -128,23 +175,31 @@ let make = _children => {
       )
     | GetFacets(facetKey) =>
       Js.log("get: " ++ facetKey);
-      ReasonReact.NoUpdate;
-    /* ReasonReact.UpdateWithSideEffects( */
-    /*   state, */
-    /*   ( */
-    /*     self => */
-    /*       Finna.search( */
-    /*         ~lookfor=self.state.text, */
-    /*         ~facets=self.state.facets, */
-    /*         ~page=self.state.page, */
-    /*         ~limit=self.state.limit, */
-    /*         ~onResults=results => */
-    /*         self.send(ReceiveFacets(facetKey, results)) */
-    /*       ) */
-    /*   ), */
-    /* ); */
-
-    | ReceiveFacets(facetKey, facets) => ReasonReact.NoUpdate
+      /* ReasonReact.NoUpdate; */
+      ReasonReact.UpdateWithSideEffects(
+        state,
+        (
+          self =>
+            Finna.getFacets(
+              ~lookfor=self.state.text,
+              ~filters=getActiveFilters(state.facets),
+              ~page=self.state.page,
+              ~facetKey=Some(facetKey),
+              ~onResults=results =>
+              self.send(ReceiveFacets(facetKey, results))
+            )
+        ),
+      );
+    | ReceiveFacets(facetKey, results) =>
+      Js.log("receive");
+      Js.log(results.facets);
+      switch (Js.Dict.get(results.facets, facetKey)) {
+      | Some(facetItem) =>
+        let facets = state.facets;
+        Js.Dict.set(facets, facetKey, facetItem);
+        ReasonReact.Update({...state, facets});
+      | None => ReasonReact.NoUpdate
+      };
     | FacetResults(facetKey, value) =>
       ReasonReact.UpdateWithSideEffects(
         {
@@ -166,7 +221,10 @@ let make = _children => {
     },
   render: self => {
     let resultCnt = self.state.result.resultCount;
+    let opt = ReactSelect.selectOption(~label="labeli", ~value="valuee");
+    Js.log([|opt, opt, opt, opt, opt, opt|]);
     <div className="p-5">
+      <ReactSelect options=[|opt, opt, opt, opt, opt, opt|] />
       <SearchField onSearch={text => self.send(Search(text, true))} />
       <input
         checked={self.state.showImages}

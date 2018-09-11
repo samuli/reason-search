@@ -49,7 +49,7 @@ let make =
       ) {
       | selected =>
         onSelectFacet(facet.key, selected.value);
-        ReasonReact.NoUpdate;
+        ReasonReact.Update(Closed);
       | exception Not_found => ReasonReact.NoUpdate
       }
     },
@@ -81,16 +81,20 @@ let make =
                 Js.log("focus");
               }
             )
-            onClick=(_ => Js.log("click"))
-            onChange=(
-              e => self.send(FacetClick(ReactEvent.Form.target(e)##value))
-            )
+            onClick=(_e => Js.log("click"))
+            onChange=(e => Js.log(ReactEvent.Form.target(e)##label))
             className={"w-1/3 mr-2 p-1 facet " ++ facet.key}>
             {
               ReasonReact.array(
                 Array.map(
-                  (facet: Finna.facetItem) =>
-                    <option key={facet.value}> {str(facet.label)} </option>,
+                  (facet: Finna.facetItem) => {
+                    let label = facet.label;
+                    let count = facet.count;
+                    <option
+                      key={facet.value} onClick={_ => Js.log("option click")}>
+                      {str({j|$label ($count)|j})}
+                    </option>;
+                  },
                   facet.items,
                 ),
               )
