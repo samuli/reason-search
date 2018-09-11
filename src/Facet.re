@@ -82,6 +82,7 @@ let make =
               (obj: ReactSelect.selectOption, action) =>
                 self.send(FacetClick(obj, action))
             )
+            isLoading={self.state == Loading}
           />
         </div>;
       | Boolean =>

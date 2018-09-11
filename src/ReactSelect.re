@@ -15,7 +15,7 @@ type jsProps = {
 
 [@bs.module "react-select"]
 external reactClass: ReasonReact.reactClass = "default";
-let make = (~options, ~onFocus, ~onChange, children) =>
+let make = (~options, ~onFocus, ~onChange, ~isLoading, children) =>
   ReasonReact.wrapJsForReason(
     ~reactClass,
     ~props=
@@ -24,7 +24,7 @@ let make = (~options, ~onFocus, ~onChange, children) =>
         ~onFocus,
         ~onChange,
         ~loadingMessage=_string => "Hetki...",
-        ~isLoading=true,
+        ~isLoading,
       ),
     children,
   );
