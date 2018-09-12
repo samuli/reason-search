@@ -3,11 +3,12 @@ open Util;
 type state =
   | Closed
   | Loading
-  | Open;
+  | Loaded;
 
 type action =
   | FacetClick(ReactSelect.selectOption, string)
-  | Focus;
+  | Focus
+  | FacetsLoaded;
 
 let component = ReasonReact.reducerComponent("Facet");
 
@@ -36,13 +37,14 @@ let make =
       | Closed =>
         ReasonReact.UpdateWithSideEffects(
           Loading,
-          (_self => onGetFacets(facet.key)),
+          (self => onGetFacets(facet.key, self.send)),
         )
       | _ => ReasonReact.NoUpdate
       }
     | FacetClick(obj, _action) =>
       onSelectFacet(facet.key, ReactSelect.valueGet(obj));
       ReasonReact.Update(Closed);
+    | FacetsLoaded => ReasonReact.Update(Loaded)
     },
   render: self =>
     switch (facet.value) {
@@ -92,13 +94,3 @@ let make =
       }
     },
 };
-
-/* className={"w-1/3 mr-2 p-1 facet " ++ facet.key} */
-/* onFocus=( */
-/*   _ => { */
-/*     self.send(Focus); */
-/*     Js.log("focus"); */
-/*   } */
-/* ) */
-/* onClick=(_e => Js.log("click")) */
-/* onChange=(e => Js.log(ReactEvent.Form.target(e)##label)) */

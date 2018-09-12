@@ -24,11 +24,15 @@ type action =
   | Results(Finna.resultProcessed)
   | ToggleImages
   | NextPage
-  | GetFacets(string)
-  | ReceiveFacets(string, Finna.resultProcessed)
+  | GetFacets(string, ReactTemplate.Facet.action => unit)
+  | ReceiveFacets(
+      string,
+      Finna.resultProcessed,
+      ReactTemplate.Facet.action => unit,
+    )
   | FacetResults(string, string)
-  | ClearFacet(string)
-  | ClearFilters;
+  | ClearFacet(string);
+/* | ClearFilters; */
 
 let component = ReasonReact.reducerComponent("App");
 
@@ -90,33 +94,6 @@ let make = _children => {
   reducer: (action: action, state: state) =>
     switch (action) {
     | Search(text, newSearch) =>
-      /* let values = Js.Dict.values(state.facets); */
-      /* let filterDummy: Finna.filter = {key: "", value: ""}; */
-      /* let filters = ArrayLabels.make(Array.length(values), filterDummy); */
-      /* Array.iteri( */
-      /*   (i, facet: Finna.facet) => */
-      /*     switch (facet.value) { */
-      /*     | None => () */
-      /*     | Value(value) => */
-      /*       let filter: Finna.filter = {key: facet.key, value}; */
-      /*       filters[i] = filter; */
-      /*     }, */
-      /*   values, */
-      /* ); */
-
-      /* Js.log(filters); */
-
-      /* let activeFilters = */
-      /*   List.filter( */
-      /*     (f: Finna.filter) => */
-      /*       switch (f.key) { */
-      /*       | "" => false */
-      /*       | _ => true */
-      /*       }, */
-      /*     Array.to_list(filters), */
-      /*   ); */
-      /* Js.log(activeFilters); */
-
       ReasonReact.UpdateWithSideEffects(
         {
           ...state,
@@ -132,7 +109,6 @@ let make = _children => {
               ~filters=getActiveFilters(state.facets),
               ~page=self.state.page,
               ~limit=self.state.limit,
-              /* ~facetKey=None, */
               ~onResults=results => self.send(Results(results)),
               (),
             )
@@ -170,7 +146,7 @@ let make = _children => {
         {...state, page: state.page + 1},
         (self => self.send(Search(state.text, false))),
       )
-    | GetFacets(facetKey) =>
+    | GetFacets(facetKey, onLoaded) =>
       ReasonReact.UpdateWithSideEffects(
         state,
         (
@@ -181,16 +157,19 @@ let make = _children => {
               ~page=self.state.page,
               ~facetKey=Some(facetKey),
               ~onResults=results =>
-              self.send(ReceiveFacets(facetKey, results))
+              self.send(ReceiveFacets(facetKey, results, onLoaded))
             )
         ),
       )
-    | ReceiveFacets(facetKey, results) =>
+    | ReceiveFacets(facetKey, results, onLoaded) =>
       switch (Js.Dict.get(results.facets, facetKey)) {
       | Some(facetItem) =>
         let facets = state.facets;
         Js.Dict.set(facets, facetKey, facetItem);
-        ReasonReact.Update({...state, facets});
+        ReasonReact.UpdateWithSideEffects(
+          {...state, facets},
+          (_s => onLoaded(FacetsLoaded)),
+        );
       | None => ReasonReact.NoUpdate
       }
     | FacetResults(facetKey, value) =>
@@ -206,11 +185,11 @@ let make = _children => {
         {...state, facets: setFacet(state.facets, facetKey, Finna.None)},
         (self => self.send(Search(state.text, true))),
       )
-    | ClearFilters =>
-      ReasonReact.UpdateWithSideEffects(
-        {...state, facets: Finna.getInitialFacets()},
-        (self => self.send(Search(state.text, true))),
-      )
+    /* | ClearFilters => */
+    /*   ReasonReact.UpdateWithSideEffects( */
+    /*     {...state, facets: Finna.getInitialFacets()}, */
+    /*     (self => self.send(Search(state.text, true))), */
+    /*   ) */
     },
   render: self => {
     let resultCnt = self.state.result.resultCount;
@@ -223,13 +202,15 @@ let make = _children => {
       />
       <Facets
         facets={self.state.facets}
-        onGetFacets={facetKey => self.send(GetFacets(facetKey))}
+        onGetFacets={
+          (facetKey, onLoaded) => self.send(GetFacets(facetKey, onLoaded))
+        }
         onSelectFacet={
           (facetKey, facetValue) =>
             self.send(FacetResults(facetKey, facetValue))
         }
         onClearFacet={filter => self.send(ClearFacet(filter))}
-        onClearFilters={_ => self.send(ClearFilters)}
+        /* onClearFilters={_ => self.send(ClearFilters)} */
       />
       {
         self.state.loading ?
@@ -242,15 +223,6 @@ let make = _children => {
         {
           switch (self.state.result.resultCount) {
           | 0 => <div> <p> {str("No results")} </p> </div>
-          /* { */
-          /*   switch (Array.length(self.state.filters)) { */
-          /*   | 0 => ReasonReact.null */
-          /*   | _ => */
-          /*     <div onClick=(_ => self.send(ClearFilters))> */
-          /*       {str("Remove filters")} */
-          /*     </div> */
-          /*   } */
-          /* } */
           | _ =>
             ReasonReact.array(
               Array.map(
