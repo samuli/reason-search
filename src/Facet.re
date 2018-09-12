@@ -68,15 +68,15 @@ let make =
         let options =
           Array.map(
             (facet: Finna.facetItem) => {
-              let label = facet.label;
-              let _count = facet.count;
+              let label =
+                facet.label ++ " (" ++ string_of_int(facet.count) ++ ")";
+
               let value = facet.value;
               ReactSelect.selectOption(~label, ~value);
             },
             facet.items,
           );
         <div>
-          <p> {str(facet.key)} </p>
           <ReactSelect
             options
             onFocus=((_a, _b) => self.send(Focus))
@@ -85,6 +85,8 @@ let make =
                 self.send(FacetClick(obj, action))
             )
             isLoading={self.state == Loading}
+            loadingMessage=(_s => "Loading...")
+            placeholder={facet.key}
           />
         </div>;
       | Boolean =>

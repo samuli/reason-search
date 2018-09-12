@@ -77,7 +77,7 @@ let make = _children => {
   ...component,
   initialState: () => {
     loading: true,
-    text: "mauri kunnas",
+    text: "self organizing maps",
     result: {
       records: Some([||]),
       facets: Js.Dict.empty(),
@@ -115,6 +115,7 @@ let make = _children => {
         ),
       )
     | Results(result) =>
+      Js.log(result);
       let newFacets = Finna.getInitialFacets();
 
       let _foo =
@@ -233,6 +234,7 @@ let make = _children => {
                       (facetKey, facetValue) =>
                         self.send(FacetResults(facetKey, facetValue))
                     }
+                    filters={getActiveFilters(self.state.facets)}
                     showImages={self.state.showImages}
                   />,
                 self.state.records,

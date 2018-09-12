@@ -11,11 +11,21 @@ type jsProps = {
   onChange: (selectOption, string) => unit,
   loadingMessage: string => string,
   isLoading: bool,
+  placeholder: string,
 };
 
 [@bs.module "react-select"]
 external reactClass: ReasonReact.reactClass = "default";
-let make = (~options, ~onFocus, ~onChange, ~isLoading, children) =>
+let make =
+    (
+      ~options,
+      ~onFocus,
+      ~onChange,
+      ~isLoading,
+      ~loadingMessage,
+      ~placeholder,
+      children,
+    ) =>
   ReasonReact.wrapJsForReason(
     ~reactClass,
     ~props=
@@ -23,8 +33,9 @@ let make = (~options, ~onFocus, ~onChange, ~isLoading, children) =>
         ~options,
         ~onFocus,
         ~onChange,
-        ~loadingMessage=_string => "Hetki...",
+        ~loadingMessage,
         ~isLoading,
+        ~placeholder,
       ),
     children,
   );
