@@ -7,16 +7,23 @@ type searchState =
   | NoResults
   | Done;
 
+type route =
+  | Search
+  | Record(string);
+
 type state = {
   loading: bool,
   text: string,
   result: Finna.resultProcessed,
   records: array(Finna.record),
+  recordResult: option(Finna.recordResult),
+  record: option(Finna.record),
   page: int,
   pageCnt: int,
   showImages: bool,
   limit: int,
   facets: Js.Dict.t(Finna.facet),
+  route,
 };
 
 type action =
@@ -31,10 +38,24 @@ type action =
       ReactTemplate.Facet.action => unit,
     )
   | FacetResults(string, string)
-  | ClearFacet(string);
-/* | ClearFilters; */
+  | ClearFacet(string)
+  | Record(string)
+  | CloseRecord
+  | RecordResult(Finna.recordResult);
 
 let component = ReasonReact.reducerComponent("App");
+
+let urlChange = (send, url: ReasonReact.Router.url) => {
+  switch (url.path) {
+  | ["Record", id] => send(Record(id))
+  | ["Search"] =>
+    let param = Js.String.split("=", url.search);
+    send(Search(param[1], true));
+  | _ => send(CloseRecord)
+  };
+  ();
+};
+let openUrl = url => ReasonReact.Router.push(url);
 
 let setFacet =
     (facets: Js.Dict.t(Finna.facet), facetKey, facetValue: Finna.facetValue) =>
@@ -82,14 +103,17 @@ let make = _children => {
       records: Some([||]),
       facets: Js.Dict.empty(),
       resultCount: 0,
-      status: "foo",
+      status: "",
     },
     page: 1,
-    limit: 50,
+    limit: 30,
     pageCnt: 0,
     showImages: false,
     records: [||],
+    record: None,
+    recordResult: None,
     facets: Finna.getInitialFacets(),
+    route: Search,
   },
   reducer: (action: action, state: state) =>
     switch (action) {
@@ -101,6 +125,7 @@ let make = _children => {
           page: newSearch ? 1 : state.page,
           records: newSearch ? [||] : state.records,
           loading: true,
+          route: Search,
         },
         (
           self =>
@@ -186,94 +211,140 @@ let make = _children => {
         {...state, facets: setFacet(state.facets, facetKey, Finna.None)},
         (self => self.send(Search(state.text, true))),
       )
-    /* | ClearFilters => */
-    /*   ReasonReact.UpdateWithSideEffects( */
-    /*     {...state, facets: Finna.getInitialFacets()}, */
-    /*     (self => self.send(Search(state.text, true))), */
-    /*   ) */
+    | Record(id) =>
+      ReasonReact.UpdateWithSideEffects(
+        {...state, route: Record(id), loading: true},
+        (
+          self =>
+            Finna.record(
+              ~id,
+              ~onResults=
+                (result: Finna.recordResult) =>
+                  self.send(RecordResult(result)),
+              (),
+            )
+        ),
+      )
+    | RecordResult((result: Finna.recordResult)) =>
+      Js.log(result);
+      let newState = {...state, recordResult: Some(result), loading: false};
+      switch (result.records) {
+      | Some(records) =>
+        let record = records[0];
+        let newState = {...newState, record: Some(record)};
+        ReasonReact.Update(newState);
+      | None => ReasonReact.Update(newState)
+      };
+    | CloseRecord => ReasonReact.Update({...state, route: Search})
     },
-  render: self => {
-    let resultCnt = self.state.result.resultCount;
-    <div className="p-5">
+  render: self =>
+    <div>
       <SearchField
         lookfor={self.state.text}
         onSearch={text => self.send(Search(text, true))}
       />
-      <input
-        checked={self.state.showImages}
-        type_="checkbox"
-        onChange={_ => self.send(ToggleImages)}
-      />
-      <Facets
-        facets={self.state.facets}
-        onGetFacets={
-          (facetKey, onLoaded) => self.send(GetFacets(facetKey, onLoaded))
-        }
-        onSelectFacet={
-          (facetKey, facetValue) =>
-            self.send(FacetResults(facetKey, facetValue))
-        }
-        onClearFacet={filter => self.send(ClearFacet(filter))}
-        /* onClearFilters={_ => self.send(ClearFilters)} */
-      />
       {
-        self.state.loading ?
-          ReasonReact.null :
-          <div className="info mt-2 mb-2">
-            {str("Results: " ++ string_of_int(resultCnt))}
-          </div>
-      }
-      <ul className="results mt-5 list-reset">
-        {
-          switch (self.state.result.resultCount) {
-          | 0 => <div> <p> {str("No results")} </p> </div>
-          | _ =>
-            ReasonReact.array(
-              Array.map(
-                (r: Finna.record) =>
-                  <Record
-                    record=r
-                    onSelectFacet={
-                      (facetKey, facetValue) =>
-                        self.send(FacetResults(facetKey, facetValue))
-                    }
-                    filters={getActiveFilters(self.state.facets)}
-                    showImages={self.state.showImages}
-                  />,
-                self.state.records,
-              ),
-            )
+        switch (self.state.route) {
+        | Search =>
+          let resultCnt = self.state.result.resultCount;
+          <div className="p-5">
+            <input
+              checked={self.state.showImages}
+              type_="checkbox"
+              onChange=(_ => self.send(ToggleImages))
+            />
+            <Facets
+              facets={self.state.facets}
+              onGetFacets=(
+                (facetKey, onLoaded) =>
+                  self.send(GetFacets(facetKey, onLoaded))
+              )
+              onSelectFacet=(
+                (facetKey, facetValue) =>
+                  self.send(FacetResults(facetKey, facetValue))
+              )
+              onClearFacet=(filter => self.send(ClearFacet(filter)))
+            />
+            {
+              self.state.loading ?
+                ReasonReact.null :
+                <div className="info mt-2 mb-2">
+                  {str("Results: " ++ string_of_int(resultCnt))}
+                </div>
+            }
+            <ul className="results mt-5 list-reset">
+              {
+                switch (self.state.result.resultCount) {
+                | 0 => <div> <p> {str("No results")} </p> </div>
+                | _ =>
+                  ReasonReact.array(
+                    Array.map(
+                      (r: Finna.record) =>
+                        <Record
+                          record=r
+                          onClick={_e => openUrl("/Record/" ++ r.id)}
+                          onSelectFacet={
+                            (facetKey, facetValue) =>
+                              self.send(FacetResults(facetKey, facetValue))
+                          }
+                          filters={getActiveFilters(self.state.facets)}
+                          showImages={self.state.showImages}
+                        />,
+                      self.state.records,
+                    ),
+                  )
+                }
+              }
+            </ul>
+            <NextPage
+              loading={self.state.loading}
+              pageCnt={self.state.pageCnt}
+              page={self.state.page}
+              onNextPage=(_ => self.send(NextPage))
+            />
+          </div>;
+        | Record(id) =>
+          switch (self.state.record) {
+          | Some((record: Finna.record)) =>
+            <div>
+              <a onClick=(_e => openUrl("/"))> {str("close")} </a>
+              <h1> {str(record.title)} </h1>
+              <p> {str("rec: " ++ id)} </p>
+            </div>
+          | None => <p> {str("err")} </p>
           }
         }
-      </ul>
-      <NextPage
-        loading={self.state.loading}
-        pageCnt={self.state.pageCnt}
-        page={self.state.page}
-        onNextPage={_ => self.send(NextPage)}
-      />
-    </div>;
-  },
-  didMount: self =>
+      }
+    </div>,
+  didMount: self => {
+    Js.log("mount");
+    let watcherID =
+      ReasonReact.Router.watchUrl(url => urlChange(self.send, url));
+    let url = ReasonReact.Router.dangerouslyGetInitialUrl();
+    urlChange(self.send, url);
+
+    self.onUnmount(() => ReasonReact.Router.unwatchUrl(watcherID));
     /* focus search field on keypress */
-    /* Webapi.Dom.Element.addKeyDownEventListener( */
-    /*   e => { */
-    /*     let code = Webapi.Dom.KeyboardEvent.code(e); */
-    /*     Js.Re.fromString("Key.*") */
-    /*     |> Js.Re.exec(code) */
-    /*     |> ( */
-    /*       fun */
-    /*       | Some(_result) => { */
-    /*           let _x = [%bs.raw */
-    /*             {| document.getElementById("search").focus() |} */
-    /*           ]; */
-    /*           (); */
-    /*         } */
-    /*       | None => () */
-    /*     ); */
-    /*   }, */
-    /*   Webapi.Dom.Document.documentElement(Webapi.Dom.document), */
-    /* ); */
-    /* initial search */
-    self.send(Search(self.state.text, true)),
+    /*   Webapi.Dom.Element.addKeyDownEventListener( */
+    /*     e => { */
+    /*       let code = Webapi.Dom.KeyboardEvent.code(e); */
+    /*       Js.Re.fromString("Key.*") */
+    /*       |> Js.Re.exec(code) */
+    /*       |> ( */
+    /*         fun */
+    /*         | Some(_result) => { */
+    /*             let _x = [%bs.raw */
+    /*               {| document.getElementById("search").focus() |} */
+    /*             ]; */
+    /*             (); */
+    /*           } */
+    /*         | None => () */
+    /*       ); */
+    /*     }, */
+    /*     Webapi.Dom.Document.documentElement(Webapi.Dom.document), */
+    /*   ), */
+    /*   initial search */
+    self.send(Search(self.state.text, true));
+  },
+  /* ) */
 };

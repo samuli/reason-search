@@ -3,7 +3,14 @@ open Util;
 let component = ReasonReact.statelessComponent("Record");
 
 let make =
-    (~record: Finna.record, ~onSelectFacet, ~filters, ~showImages, _children) => {
+    (
+      ~record: Finna.record,
+      ~onClick,
+      ~onSelectFacet,
+      ~filters,
+      ~showImages,
+      _children,
+    ) => {
   ...component,
   render: _self => {
     let imgs =
@@ -50,18 +57,21 @@ let make =
     <li
       key={record.id}
       className="record pb-1 mb-1 border-b border-solid border-grey">
-      <a
-        className="link font-hairline no-underline"
-        target="_finna"
-        href={Finna.recordBaseUrl ++ record.id}>
-        {str(record.title)}
-      </a>
+      <a className="link font-hairline no-underline" target="_finna" onClick>
+        /* href={Finna.recordBaseUrl ++ record.id} */
+        /* onClick={_e => ReasonReact.Router.push("Record/" ++ record.id)}> */
+         {str(record.title)} </a>
       year
       /* <FormatIcon record /> */
       <p>
         authors
         {facetLink("format", record.formats)}
-        {facetLink("building", record.buildings)}
+        {
+          switch (record.buildings) {
+          | Some(buildings) => facetLink("building", buildings)
+          | None => ReasonReact.null
+          }
+        }
         {
           switch (Array.to_list(imgs)) {
           | [] => <span />

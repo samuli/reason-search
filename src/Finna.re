@@ -78,10 +78,16 @@ type record = {
   id: string,
   title: string,
   formats: array(translated),
-  buildings: array(translated),
+  buildings: option(array(translated)),
   images: array(string),
   authors: array(string),
   year: option(string),
+};
+
+type recordResult = {
+  records: option(array(record)),
+  resultCount: int,
+  status: string,
 };
 
 type result = {
@@ -121,7 +127,7 @@ let record = json =>
     id: json |> field("id", string),
     title: json |> field("title", string),
     formats: json |> field("formats", array(translated)),
-    buildings: json |> field("buildings", array(translated)),
+    buildings: json |> optional(field("buildings", array(translated))),
     images: json |> field("images", array(string)),
     authors:
       json
@@ -173,6 +179,13 @@ let processResults = (results: result) => {
   res;
 };
 
+let recordResult = (json: Js.Json.t): recordResult =>
+  Json.Decode.{
+    records: json |> optional(field("records", array(record))),
+    resultCount: json |> field("resultCount", int),
+    status: json |> field("status", string),
+  };
+
 let search = (~lookfor, ~filters, ~page, ~limit, ~onResults, ~facetKey=?, ()) => {
   let filterStr =
     filters
@@ -192,7 +205,7 @@ let search = (~lookfor, ~filters, ~page, ~limit, ~onResults, ~facetKey=?, ()) =>
     | _ => {j|&facet[]=$facetKey&facetFilter[]=$facetKey%3A0%2F.*|j}
     };
 
-  let url = {j|$apiUrl/api/v1/search?lookfor=$lookfor&type=AllFields&field[]=id&field[]=formats&field[]=title&field[]=buildings&field[]=images&field[]=authors&field[]=year&sort=$sort%2Cid%20asc&page=$page&limit=$limit&prettyPrint=false&lng=$lng$facetStr&$filterStr|j};
+  let url = {j|$apiUrl/api/v1/search?lookfor=$lookfor&type=AllFields&field[]=id&field[]=formats&field[]=title&field[]=images&field[]=authors&field[]=year&sort=$sort%2Cid%20asc&page=$page&limit=$limit&prettyPrint=false&lng=$lng$facetStr&$filterStr|j};
 
   Js.log(url);
   Js.Promise.(
@@ -205,6 +218,22 @@ let search = (~lookfor, ~filters, ~page, ~limit, ~onResults, ~facetKey=?, ()) =>
          |> processResults
          |> onResults
          |> resolve
+       )
+    |> ignore
+  );
+};
+
+let record = (~id, ~onResults, ()) => {
+  let lng = "fi";
+
+  let url = {j|$apiUrl/api/v1/record?id=$id&field[]=id&field[]=formats&field[]=title&field[]=buildings&field[]=images&field[]=authors&field[]=year&prettyPrint=false&lng=$lng|j};
+
+  Js.log(url);
+  Js.Promise.(
+    Fetch.fetch(url)
+    |> then_(Fetch.Response.text)
+    |> then_(text =>
+         text |> Json.parseOrRaise |> recordResult |> onResults |> resolve
        )
     |> ignore
   );

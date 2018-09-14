@@ -1,14 +1,6 @@
 let component = ReasonReact.statelessComponent("Facets");
 
-let make =
-    (
-      ~onGetFacets,
-      ~onSelectFacet,
-      ~onClearFacet,
-      /* ~onClearFilters, */
-      ~facets,
-      _children,
-    ) => {
+let make = (~onGetFacets, ~onSelectFacet, ~onClearFacet, ~facets, _children) => {
   ...component,
   render: _self =>
     <div>

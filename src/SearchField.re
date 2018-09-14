@@ -23,13 +23,14 @@ let make = (~lookfor, ~onSearch, _children) => {
         className="search edit border border-gray border-solid p-2 w-full"
         value={self.state.text}
         onChange={
-          event => self.send(Change(ReactEvent.Form.target(event)##value))
+          ev => self.send(Change(ReactEvent.Form.target(ev)##value))
         }
         onKeyDown={
-          event =>
-            if (ReactEvent.Keyboard.keyCode(event) === 13) {
-              ReactEvent.Keyboard.preventDefault(event);
-              self.send(Search);
+          ev =>
+            if (ReactEvent.Keyboard.keyCode(ev) === 13) {
+              ReactEvent.Keyboard.preventDefault(ev);
+              ReasonReact.Router.push("/Search?lookfor=" ++ self.state.text);
+              /* self.send(Search); */
             }
         }
         autoFocus=true
