@@ -195,7 +195,10 @@ let make = _children => {
   render: self => {
     let resultCnt = self.state.result.resultCount;
     <div className="p-5">
-      <SearchField onSearch={text => self.send(Search(text, true))} />
+      <SearchField
+        lookfor={self.state.text}
+        onSearch={text => self.send(Search(text, true))}
+      />
       <input
         checked={self.state.showImages}
         type_="checkbox"

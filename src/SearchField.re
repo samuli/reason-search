@@ -6,9 +6,9 @@ type action =
 
 let component = ReasonReact.reducerComponent("SearchField");
 
-let make = (~onSearch, _children) => {
+let make = (~lookfor, ~onSearch, _children) => {
   ...component,
-  initialState: () => {text: "mauri kunnas"},
+  initialState: () => {text: lookfor},
   reducer: (action: action, state: state) =>
     switch (action) {
     | Change(text) => ReasonReact.Update({text: text})
