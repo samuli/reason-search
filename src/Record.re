@@ -1,9 +1,13 @@
 open Util;
 
+type details =
+  | List
+  | Full;
 let component = ReasonReact.statelessComponent("Record");
 
 let make =
     (
+      ~details,
       ~record: Finna.record,
       ~onClick,
       ~onSelectFacet,
@@ -54,31 +58,56 @@ let make =
         />
       | [] => ReasonReact.null
       };
-    <li
-      key={record.id}
-      className="record pb-1 mb-1 border-b border-solid border-grey">
-      <a className="link font-hairline no-underline" target="_finna" onClick>
-        /* href={Finna.recordBaseUrl ++ record.id} */
-        /* onClick={_e => ReasonReact.Router.push("Record/" ++ record.id)}> */
-         {str(record.title)} </a>
-      year
-      /* <FormatIcon record /> */
-      <p>
-        authors
-        {facetLink("format", record.formats)}
-        {
-          switch (record.buildings) {
-          | Some(buildings) => facetLink("building", buildings)
-          | None => ReasonReact.null
+
+    switch (details) {
+    | List =>
+      <li
+        key={record.id}
+        className="record pb-1 mb-1 border-b border-solid border-grey">
+        <a className="link font-hairline no-underline" target="_finna" onClick>
+          {str(record.title)}
+        </a>
+        year
+        /* <FormatIcon record /> */
+        <p>
+          authors
+          {facetLink("format", record.formats)}
+          {
+            switch (record.buildings) {
+            | Some(buildings) => facetLink("building", buildings)
+            | None => ReasonReact.null
+            }
           }
-        }
-        {
-          switch (Array.to_list(imgs)) {
-          | [] => <span />
-          | [img, ..._rest] => <img className="w-1/4" src=img />
+          {
+            switch (Array.to_list(imgs)) {
+            | [] => <span />
+            | [img, ..._rest] => <img className="w-1/4" src=img />
+            }
           }
-        }
-      </p>
-    </li>;
+        </p>
+      </li>
+    | Full =>
+      <div>
+        <h1> {str(record.title)} </h1>
+        <p>
+          authors
+          {
+            switch (record.buildings) {
+            | Some(buildings) => facetLink("building", buildings)
+            | None => ReasonReact.null
+            }
+          }
+          {
+            switch (Array.to_list(imgs)) {
+            | [] => <span />
+            | [img, ..._rest] => <img className="w-1/4" src=img />
+            }
+          }
+        </p>
+        <p>
+          <a href={Finna.recordBaseUrl ++ record.id}> {str("Finna")} </a>
+        </p>
+      </div>
+    };
   },
 };

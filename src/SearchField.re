@@ -6,7 +6,7 @@ type action =
 
 let component = ReasonReact.reducerComponent("SearchField");
 
-let make = (~lookfor, ~onSearch, _children) => {
+let make = (~lookfor, ~openUrl, ~onSearch, _children) => {
   ...component,
   initialState: () => {text: lookfor},
   reducer: (action: action, state: state) =>
@@ -29,7 +29,7 @@ let make = (~lookfor, ~onSearch, _children) => {
           ev =>
             if (ReactEvent.Keyboard.keyCode(ev) === 13) {
               ReactEvent.Keyboard.preventDefault(ev);
-              ReasonReact.Router.push("/Search?lookfor=" ++ self.state.text);
+              openUrl("/Search/lookfor=" ++ self.state.text);
               /* self.send(Search); */
             }
         }

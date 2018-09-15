@@ -2,11 +2,6 @@ let apiUrl = "https://api.finna.fi";
 let baseUrl = "https://finna.fi";
 let recordBaseUrl = baseUrl ++ "/Record/";
 
-type translated = {
-  value: string,
-  label: string,
-};
-
 type facetLabelVariant =
   | String(string)
   | Int(int);
@@ -16,6 +11,12 @@ let val2Str = v =>
   | String(v) => v
   | Int(v) => string_of_int(v)
   };
+
+/* API types */
+type translated = {
+  value: string,
+  label: string,
+};
 
 type facetType =
   | Normal
@@ -36,9 +37,25 @@ type facet = {
   value: facetValue,
   items: array(facetItem),
 };
+
 type filter = {
   key: string,
   value: string,
+};
+
+type author = {
+  name: string,
+  role: string,
+};
+
+type record = {
+  id: string,
+  title: string,
+  formats: array(translated),
+  buildings: option(array(translated)),
+  images: array(string),
+  authors: array(string),
+  year: option(string),
 };
 
 let getInitialFacets = () => {
@@ -70,40 +87,39 @@ let getInitialFacets = () => {
   facets;
 };
 
-type author = {
-  name: string,
-  role: string,
-};
-type record = {
-  id: string,
-  title: string,
-  formats: array(translated),
-  buildings: option(array(translated)),
-  images: array(string),
-  authors: array(string),
-  year: option(string),
-};
-
+/* API responses */
 type recordResult = {
   records: option(array(record)),
-  resultCount: int,
+  resultCount: option(int),
   status: string,
 };
-
 type result = {
   records: option(array(record)),
   facets: option(Js.Dict.t(array(facetItem))),
-  resultCount: int,
+  resultCount: option(int),
   status: string,
+  statusMessage: option(string),
 };
 
+/* Cleaned API responses */
+type recordResultProcessed = {record: option(record)};
 type resultProcessed = {
   records: option(array(record)),
   facets: Js.Dict.t(facet),
   resultCount: int,
-  status: string,
 };
 
+/* Result wrappers */
+type recordResponse = {
+  error: bool,
+  record: option(record),
+};
+type searchResponse = {
+  error: bool,
+  results: option(resultProcessed),
+};
+
+/* Decoders */
 let translated = json =>
   Json.Decode.{
     value: json |> field("value", string),
@@ -140,10 +156,11 @@ let record = json =>
 let result = (json: Js.Json.t): result =>
   Json.Decode.{
     records: json |> optional(field("records", array(record))),
-    resultCount: json |> field("resultCount", int),
+    resultCount: json |> optional(field("resultCount", int)),
     facets:
       json |> optional(field("facets", dict(array(decodeFacetItem)))),
     status: json |> field("status", string),
+    statusMessage: json |> optional(field("statusMessage", string)),
   };
 
 let processFacets = facets =>
@@ -169,23 +186,44 @@ let processFacets = facets =>
   | None => Js.Dict.empty()
   };
 
-let processResults = (results: result) => {
-  let res: resultProcessed = {
-    facets: processFacets(results.facets),
-    records: results.records,
-    resultCount: results.resultCount,
-    status: results.status,
+/* Search result decoder */
+let processResults = (results: result): searchResponse =>
+  switch (results.status) {
+  | "OK" =>
+    let res: resultProcessed = {
+      facets: processFacets(results.facets),
+      records: results.records,
+      resultCount:
+        switch (results.resultCount) {
+        | Some(count) => count
+        | None => 0
+        },
+    };
+    {error: false, results: Some(res)};
+  | "ERROR" => {error: true, results: None}
   };
-  res;
-};
+
+/* Record decoders */
+let processRecordResults = (result: recordResult): recordResponse =>
+  switch (result.status) {
+  | "OK" =>
+    let records =
+      switch (result.records) {
+      | Some(records) => records
+      | None => [||]
+      };
+    {error: false, record: Some(records[0])};
+  | _ => {error: true, record: None}
+  };
 
 let recordResult = (json: Js.Json.t): recordResult =>
   Json.Decode.{
     records: json |> optional(field("records", array(record))),
-    resultCount: json |> field("resultCount", int),
+    resultCount: json |> optional(field("resultCount", int)),
     status: json |> field("status", string),
   };
 
+/* API calls */
 let search = (~lookfor, ~filters, ~page, ~limit, ~onResults, ~facetKey=?, ()) => {
   let filterStr =
     filters
@@ -233,7 +271,12 @@ let record = (~id, ~onResults, ()) => {
     Fetch.fetch(url)
     |> then_(Fetch.Response.text)
     |> then_(text =>
-         text |> Json.parseOrRaise |> recordResult |> onResults |> resolve
+         text
+         |> Json.parseOrRaise
+         |> recordResult
+         |> processRecordResults
+         |> onResults
+         |> resolve
        )
     |> ignore
   );
