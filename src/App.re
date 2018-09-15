@@ -1,7 +1,6 @@
 [%%debugger.chrome];
 
-open! Types;
-open Util;
+open Types;
 
 type route =
   | Search
@@ -270,17 +269,25 @@ let make = _children => {
             pageCnt={self.state.pageCnt}
             page={self.state.page}
           />;
-        | Record(_id) =>
-          switch (self.state.record) {
-          | Some((record: Finna.record)) =>
-            <Ui.RecordPage
-              dispatch={self.send}
-              openUrl
-              record
-              searchStatus={self.state.searchStatus}
-              activeFilters={getActiveFilters(self.state.facets)}
-            />
-          | None => <p> {str("err")} </p>
+        | Record(id) =>
+          switch (self.state.recordResult) {
+          | Some(response) =>
+            response.error ?
+              <Ui.Error message={"Failded to load record " ++ id} /> :
+              (
+                switch (self.state.record) {
+                | Some((record: Finna.record)) =>
+                  <Ui.RecordPage
+                    dispatch={self.send}
+                    openUrl
+                    record
+                    searchStatus={self.state.searchStatus}
+                    activeFilters={getActiveFilters(self.state.facets)}
+                  />
+                | None => ReasonReact.null
+                }
+              )
+          | None => ReasonReact.null
           }
         }
       }
