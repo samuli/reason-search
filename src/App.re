@@ -19,13 +19,15 @@ type state = {
   limit: int,
   facets: Js.Dict.t(Finna.facet),
   route,
+  history: array(string),
 };
 
 let urlChange = (send, url: ReasonReact.Router.url) => {
   Js.log(url.hash);
   let hash = url.hash;
   switch (hash) {
-  | "/" => send(CloseRecordCmd)
+  | "/"
+  | "" => send(CloseRecordCmd)
   | _ =>
     let hash = String.sub(url.hash, 1, String.length(url.hash) - 1);
     Js.log(Js.String.split("/", hash));
@@ -33,7 +35,8 @@ let urlChange = (send, url: ReasonReact.Router.url) => {
     | [|"Record", id|] => send(RecordCmd(id))
     | [|"Search", params|] =>
       switch (Js.String.split("=", params)) {
-      | [|"lookfor", lookfor|] => send(SearchCmd(lookfor, true))
+      | [|"lookfor", lookfor|] =>
+        send(SearchCmd(Js_global.decodeURIComponent(lookfor), true))
       | [||] => send(CloseRecordCmd)
       }
     | [|""|] => Js.log("main")
@@ -97,6 +100,7 @@ let make = _children => {
     recordResult: None,
     facets: Finna.getInitialFacets(),
     route: Search,
+    history: [||],
   },
   reducer: (action: action, state: state) =>
     switch (action) {
@@ -107,7 +111,7 @@ let make = _children => {
           text,
           page: newSearch ? 1 : state.page,
           records: newSearch ? [||] : state.records,
-          searchStatus: LoadingStatus,
+          searchStatus: newSearch ? LoadingStatus : LoadingMoreStatus,
           route: Search,
         },
         (
@@ -231,14 +235,18 @@ let make = _children => {
       };
       switch (result.record) {
       | Some(record) =>
-        let newState = {...newState, record: Some(record)};
+        let newState = {
+          ...newState,
+          record: Some(record),
+          history: Array.append(state.history, [|record.id|]),
+        };
         ReasonReact.Update(newState);
       | None => ReasonReact.Update(newState)
       };
     | CloseRecordCmd => ReasonReact.Update({...state, route: Search})
     },
   render: self =>
-    <div className="p-5">
+    <div>
       <SearchField
         openUrl
         lookfor={self.state.text}
@@ -268,6 +276,20 @@ let make = _children => {
             records={self.state.records}
             pageCnt={self.state.pageCnt}
             page={self.state.page}
+            isVisited=(
+              id => {
+                Js.log("visited: " ++ id);
+                switch (
+                  List.find(
+                    recId => recId == id,
+                    Array.to_list(self.state.history),
+                  )
+                ) {
+                | exception Not_found => false
+                | _ => true
+                };
+              }
+            )
           />;
         | Record(id) =>
           switch (self.state.recordResult) {

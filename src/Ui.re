@@ -26,62 +26,75 @@ module Results = {
         ~records,
         ~pageCnt,
         ~page,
+        ~isVisited,
         _children,
       ) => {
     ...component,
     render: _self =>
       <div className="">
-        <input
-          checked=showImages
-          type_="checkbox"
-          onChange={_ => dispatch(ToggleImagesCmd)}
-        />
-        <Facets
-          facets
-          onGetFacets={
-            (facetKey, onLoaded) =>
-              dispatch(GetFacetsCmd(facetKey, onLoaded))
-          }
-          onSelectFacet={
-            (facetKey, facetValue) =>
-              dispatch(FacetResultsCmd(facetKey, facetValue))
-          }
-          onClearFacet={filter => dispatch(ClearFacetCmd(filter))}
-        />
         {
           switch (searchStatus) {
-          | ResultsStatus =>
-            <div className="info mt-2 mb-2">
-              {str("Results: " ++ string_of_int(resultCnt))}
-              <ul className="results mt-5 list-reset">
-                {
-                  ReasonReact.array(
-                    Array.map(
-                      (r: Finna.record) =>
-                        <Record
-                          details=Record.List
-                          record=r
-                          onClick={_e => openUrl("/Record/" ++ r.id)}
-                          onSelectFacet={
-                            (facetKey, facetValue) =>
-                              dispatch(FacetResultsCmd(facetKey, facetValue))
-                          }
-                          filters=activeFilters
-                          showImages
-                        />,
-                      records,
-                    ),
+          | ResultsStatus
+          | LoadingStatus
+          | LoadingMoreStatus =>
+            <div>
+              <div className="px-5 pb-5 bg-grey-lighter">
+                <Facets
+                  facets
+                  onGetFacets=(
+                    (facetKey, onLoaded) =>
+                      dispatch(GetFacetsCmd(facetKey, onLoaded))
                   )
+                  onSelectFacet=(
+                    (facetKey, facetValue) =>
+                      dispatch(FacetResultsCmd(facetKey, facetValue))
+                  )
+                  onClearFacet=(filter => dispatch(ClearFacetCmd(filter)))
+                />
+              </div>
+              <div className="info p-5 mb-2">
+                <strong>
+                  {str("Results: " ++ string_of_int(resultCnt))}
+                </strong>
+                <ul className="results mt-5 list-reset">
+                  {
+                    ReasonReact.array(
+                      Array.map(
+                        (r: Finna.record) =>
+                          <Record
+                            details=Record.List
+                            record=r
+                            onClick={_e => openUrl("/Record/" ++ r.id)}
+                            onSelectFacet={
+                              (facetKey, facetValue) =>
+                                dispatch(
+                                  FacetResultsCmd(facetKey, facetValue),
+                                )
+                            }
+                            filters=activeFilters
+                            showImages
+                            isVisited={isVisited(r.id)}
+                          />,
+                        records,
+                      ),
+                    )
+                  }
+                </ul>
+                {
+                  searchStatus == LoadingStatus
+                  || searchStatus == LoadingMoreStatus ?
+                    <Loading padding=1 /> : ReasonReact.null
                 }
-              </ul>
-              <NextPage
-                loading={searchStatus == LoadingStatus}
-                pageCnt
-                page
-                onNextPage=(_ => dispatch(NextPageCmd))
-              />
+                <NextPage
+                  loading={searchStatus == LoadingMoreStatus}
+                  pageCnt
+                  page
+                  onNextPage=(_ => dispatch(NextPageCmd))
+                />
+              </div>
             </div>
-          | NoResultsStatus => str("No results")
+          | NoResultsStatus =>
+            <div className="mt-3"> {str("No results")} </div>
           | _ => ReasonReact.null
           }
         }
@@ -103,11 +116,10 @@ module RecordPage = {
       ) => {
     ...component,
     render: _self =>
-      <div>
-        <a onClick={_e => openUrl("/")}> {str("close")} </a>
+      <div className="p-5">
         {
           switch (searchStatus) {
-          | LoadingStatus => <p> {str("Loading...")} </p>
+          | LoadingStatus => <Loading padding=5 />
           | ResultsStatus =>
             <Record
               details=Record.Full

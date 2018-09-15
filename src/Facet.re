@@ -7,6 +7,7 @@ type state =
 
 type action =
   | FacetClick(ReactSelect.selectOption, string)
+  | BooleanFacetClick(bool)
   | Focus
   | FacetsLoaded;
 
@@ -15,13 +16,12 @@ let component = ReasonReact.reducerComponent("Facet");
 let boolFacet = (onClick, value, label) =>
   <span>
     <label>
-      <input type_="checkbox" onClick name="foo" value />
-      {str(label)}
+      <input type_="checkbox" onClick value checked={value == "0"} />
     </label>
   </span>;
-
 let make =
     (
+      ~ind,
       ~onGetFacets,
       ~onSelectFacet,
       ~onClearFacet,
@@ -44,6 +44,9 @@ let make =
     | FacetClick(obj, _action) =>
       onSelectFacet(facet.key, ReactSelect.valueGet(obj));
       ReasonReact.Update(Closed);
+    | BooleanFacetClick(selected) =>
+      onSelectFacet(facet.key, selected ? "1" : "0");
+      ReasonReact.NoUpdate;
     | FacetsLoaded => ReasonReact.Update(Loaded)
     },
   render: self =>
@@ -76,7 +79,7 @@ let make =
             },
             facet.items,
           );
-        <div>
+        <div className={"mb-2 sm:w-1/2" ++ (ind == 0 ? " sm:mr-2" : "")}>
           <ReactSelect
             options
             onFocus=((_a, _b) => self.send(Focus))
@@ -90,9 +93,15 @@ let make =
           />
         </div>;
       | Boolean =>
-        <div
-          /* {boolFacet(_ => self.send(FacetClick("1")), "1", facet.key)} */
-        />
+        <div>
+          {
+            boolFacet(
+              _ => self.send(BooleanFacetClick(true)),
+              "1",
+              facet.key,
+            )
+          }
+        </div>
       }
     },
 };

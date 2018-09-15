@@ -55,6 +55,7 @@ type record = {
   buildings: option(array(translated)),
   images: array(string),
   authors: array(string),
+  publishers: option(array(string)),
   year: option(string),
 };
 
@@ -150,6 +151,7 @@ let record = json =>
       |> [%bs.raw
         {| (json) => { return(Object.keys(json.authors.primary)); } |}
       ],
+    publishers: json |> optional(field("publishers", array(string))),
     year: json |> optional(field("year", string)),
   };
 
@@ -243,7 +245,7 @@ let search = (~lookfor, ~filters, ~page, ~limit, ~onResults, ~facetKey=?, ()) =>
     | _ => {j|&facet[]=$facetKey&facetFilter[]=$facetKey%3A0%2F.*|j}
     };
 
-  let url = {j|$apiUrl/api/v1/search?lookfor=$lookfor&type=AllFields&field[]=id&field[]=formats&field[]=title&field[]=images&field[]=authors&field[]=year&sort=$sort%2Cid%20asc&page=$page&limit=$limit&prettyPrint=false&lng=$lng$facetStr&$filterStr|j};
+  let url = {j|$apiUrl/api/v1/search?lookfor=$lookfor&type=AllFields&field[]=id&field[]=formats&field[]=title&field[]=images&field[]=authors&field[]=year&field[]=publishers&sort=$sort%2Cid%20asc&page=$page&limit=$limit&prettyPrint=false&lng=$lng$facetStr&$filterStr|j};
 
   Js.log(url);
   Js.Promise.(
@@ -263,7 +265,7 @@ let search = (~lookfor, ~filters, ~page, ~limit, ~onResults, ~facetKey=?, ()) =>
 
 let record = (~id, ~onResults, ()) => {
   let lng = "fi";
-
+  let id = Js_global.encodeURIComponent(id);
   let url = {j|$apiUrl/api/v1/record?id=$id&field[]=id&field[]=formats&field[]=title&field[]=buildings&field[]=images&field[]=authors&field[]=year&prettyPrint=false&lng=$lng|j};
 
   Js.log(url);

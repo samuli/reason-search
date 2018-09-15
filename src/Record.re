@@ -13,6 +13,7 @@ let make =
       ~onSelectFacet,
       ~filters,
       ~showImages,
+      ~isVisited=false,
       _children,
     ) => {
   ...component,
@@ -27,14 +28,23 @@ let make =
       switch (record.authors) {
       | [||] => ReasonReact.null
       | authors =>
-        <span className="authors mr-2">
+        <span className="authors text-sm font-semibold mr-2">
           {str(Js.Array.joinWith(", ", authors))}
         </span>
       };
 
+    let publishers =
+      switch (record.publishers) {
+      | Some(publishers) when Array.length(publishers) > 0 =>
+        <span className="publishers text-sm mr-2">
+          {str(Js.Array.joinWith(", ", publishers))}
+        </span>
+      | _ => ReasonReact.null
+      };
+
     let year =
       switch (record.year) {
-      | Some(year) => <span className="year ml-2"> {str(year)} </span>
+      | Some(year) => <span className="year text-sm"> {str(year)} </span>
       | None => ReasonReact.null
       };
 
@@ -53,7 +63,7 @@ let make =
           label={facet.label}
           facetKey=key
           value={facet.value}
-          isActive={isFacetActive(key)}
+          isActive={!isFacetActive(key)}
           onSelect=onSelectFacet
         />
       | [] => ReasonReact.null
@@ -62,13 +72,17 @@ let make =
     switch (details) {
     | List =>
       <li
+        onClick
         key={record.id}
-        className="record pb-1 mb-1 border-b border-solid border-grey">
-        <a className="link font-hairline no-underline" target="_finna" onClick>
-          {str(record.title)}
+        className={
+          "record py-1 border-b border-solid border-grey hover:bg-grey-light cursor-pointer"
+          ++ (isVisited ? " bg-blue-lighter" : "")
+        }>
+        <a
+          className="link font-hairline no-underline cursor-pointer"
+          target="_finna">
+          <h3 className="font-normal text-base"> {str(record.title)} </h3>
         </a>
-        year
-        /* <FormatIcon record /> */
         <p>
           authors
           {facetLink("format", record.formats)}
@@ -78,18 +92,15 @@ let make =
             | None => ReasonReact.null
             }
           }
-          {
-            switch (Array.to_list(imgs)) {
-            | [] => <span />
-            | [img, ..._rest] => <img className="w-1/4" src=img />
-            }
-          }
         </p>
+        publishers
+        year
       </li>
+    /* <FormatIcon record /> */
     | Full =>
       <div>
-        <h1> {str(record.title)} </h1>
-        <p>
+        <h2> {str(record.title)} </h2>
+        <div className="my-2">
           authors
           {
             switch (record.buildings) {
@@ -97,14 +108,18 @@ let make =
             | None => ReasonReact.null
             }
           }
+        </div>
+        <div>
           {
-            switch (Array.to_list(imgs)) {
-            | [] => <span />
-            | [img, ..._rest] => <img className="w-1/4" src=img />
-            }
+            ReasonReact.array(
+              Array.map(
+                img => <div> <img className="mb-1" src=img /> </div>,
+                Array.sub(imgs, 0, min(Array.length(imgs), 5)),
+              ),
+            )
           }
-        </p>
-        <p>
+        </div>
+        <p className="mt-1">
           <a href={Finna.recordBaseUrl ++ record.id}> {str("Finna")} </a>
         </p>
       </div>

@@ -14,5 +14,6 @@ type action =
 type searchState =
   | NotLoadedStatus
   | LoadingStatus
+  | LoadingMoreStatus
   | NoResultsStatus
   | ResultsStatus;
