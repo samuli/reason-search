@@ -27,7 +27,7 @@ let urlChange = (send, url: ReasonReact.Router.url) => {
   switch (hash) {
   | "/" => send(CloseRecordCmd)
   | _ =>
-    let hash = String.sub(url.hash, 1, String.length(url.hash) - 2);
+    let hash = String.sub(url.hash, 1, String.length(url.hash) - 1);
     Js.log(Js.String.split("/", hash));
     switch (Js.String.split("/", hash)) {
     | [|"Record", id|] => send(RecordCmd(id))
@@ -113,7 +113,7 @@ let make = _children => {
         (
           self =>
             Finna.search(
-              ~lookfor=self.state.text,
+              ~lookfor=text,
               ~filters=getActiveFilters(state.facets),
               ~page=self.state.page,
               ~limit=self.state.limit,
