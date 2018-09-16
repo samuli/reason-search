@@ -20,6 +20,7 @@ module Results = {
         ~openUrl,
         ~showImages,
         ~facets,
+        ~filters,
         ~activeFilters,
         ~searchStatus,
         ~resultCnt,
@@ -41,6 +42,7 @@ module Results = {
               <div className="px-5 pb-5 bg-grey-lighter">
                 <Facets
                   facets
+                  filters
                   onGetFacets=(
                     (facetKey, onLoaded) =>
                       dispatch(GetFacetsCmd(facetKey, onLoaded))

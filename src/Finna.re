@@ -236,7 +236,7 @@ let search = (~lookfor, ~filters, ~page, ~limit, ~onResults, ~facetKey=?, ()) =>
        })
     |> Js.Array.joinWith("&");
 
-  let lng = "fi";
+  let lng = "en-gb";
   let sort = "relevance";
 
   let facetStr =
@@ -284,5 +284,17 @@ let record = (~id, ~onResults, ()) => {
   );
 };
 
-let getFacets = (~lookfor, ~filters, ~page, ~facetKey, ~onResults) =>
-  search(~lookfor, ~filters, ~page, ~limit=0, ~onResults, ~facetKey, ());
+let getFacets = (~lookfor, ~filters, ~page, ~facetKey, ~onResults) => {
+  let filtersWithoutFacet =
+    List.filter(f => f.key != facetKey, Array.to_list(filters))
+    |> Array.of_list;
+  search(
+    ~lookfor,
+    ~filters=filtersWithoutFacet,
+    ~page,
+    ~limit=0,
+    ~onResults,
+    ~facetKey,
+    (),
+  );
+};

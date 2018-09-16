@@ -1,24 +1,35 @@
+[%%debugger.chrome];
+
 open Util;
 
-type state =
+type menuMode =
+  | NotLoaded
   | Closed
   | Loading
-  | Loaded;
+  | Loaded
+  | Open;
 
+type state = {
+  mode: menuMode,
+  filters: array(Finna.filter),
+  facet: Finna.facet,
+};
 type action =
   | FacetClick(ReactSelect.selectOption, string)
   | BooleanFacetClick(bool)
   | Focus
-  | FacetsLoaded;
+  | FacetsLoaded(Finna.facet)
+  | MenuClose;
 
 let component = ReasonReact.reducerComponent("Facet");
 
-let boolFacet = (onClick, value, label) =>
+let boolFacet = (onClick, value, _label) =>
   <span>
     <label>
       <input type_="checkbox" onClick value checked={value == "0"} />
     </label>
   </span>;
+
 let make =
     (
       ~ind,
@@ -26,82 +37,112 @@ let make =
       ~onSelectFacet,
       ~onClearFacet,
       ~facet: Finna.facet,
+      ~filters,
+      ~title,
       _children,
     ) => {
   ...component,
-  initialState: () => Closed,
+  initialState: () => {mode: NotLoaded, facet, filters: [||]},
   reducer: (action: action, state: state) =>
     switch (action) {
     | Focus =>
-      switch (state) {
-      | Closed =>
+      switch (state.mode) {
+      | NotLoaded =>
         ReasonReact.UpdateWithSideEffects(
-          Loading,
+          {
+            ...state,
+            mode: Loading,
+            facet: {
+              ...state.facet,
+              items: [||],
+            },
+          },
           (self => onGetFacets(facet.key, self.send)),
         )
+      | Loaded => ReasonReact.Update({...state, mode: Open})
       | _ => ReasonReact.NoUpdate
       }
-    | FacetClick(obj, _action) =>
-      onSelectFacet(facet.key, ReactSelect.valueGet(obj));
-      ReasonReact.Update(Closed);
+    | FacetClick((obj: ReactSelect.selectOption), _action) =>
+      switch (ReactSelect.valueGet(obj)) {
+      | "*" => onClearFacet(facet.key)
+      | _ => onSelectFacet(facet.key, ReactSelect.valueGet(obj))
+      };
+      ReasonReact.Update({...state, mode: Closed});
     | BooleanFacetClick(selected) =>
       onSelectFacet(facet.key, selected ? "1" : "0");
       ReasonReact.NoUpdate;
-    | FacetsLoaded => ReasonReact.Update(Loaded)
+    | FacetsLoaded(facet) =>
+      ReasonReact.Update({...state, mode: Loaded, facet})
+    | MenuClose => ReasonReact.Update({...state, mode: Closed})
     },
+  willReceiveProps: self => {
+    let changed = self.state.filters != filters;
+    let mode = changed ? NotLoaded : self.state.mode;
+    {...self.state, mode, filters};
+  },
   render: self =>
-    switch (facet.value) {
-    | Value(selectedValue) =>
-      switch (facet.facetType) {
-      | Normal =>
-        <div
-          className="pointer mr-2 text-xs uppercase p-2 bg-grey-light rounded cursor-pointer w-auto inline-block hover:bg-red-light"
-          onClick=(_e => onClearFacet(facet.key))>
-          {str(selectedValue)}
-        </div>
-      | Boolean =>
-        <div>
-          {boolFacet(_ => onClearFacet(facet.key), "0", selectedValue)}
-        </div>
-      }
+    switch (facet.facetType) {
+    | Normal =>
+      let all: Finna.facetItem = {value: "*", label: title, count: 0};
+      let options =
+        List.mapi(
+          (ind, facet: Finna.facetItem) => {
+            let label = facet.label;
+            let label =
+              ind > 0 ?
+                label ++ " (" ++ string_of_int(facet.count) ++ ")" : label;
 
-    | None =>
-      switch (facet.facetType) {
-      | Normal =>
-        let options =
-          Array.map(
-            (facet: Finna.facetItem) => {
-              let label =
-                facet.label ++ " (" ++ string_of_int(facet.count) ++ ")";
+            let value = facet.value;
+            ReactSelect.selectOption(~label, ~value);
+          },
+          [all, ...Array.to_list(self.state.facet.items)],
+        )
+        |> Array.of_list;
 
-              let value = facet.value;
-              ReactSelect.selectOption(~label, ~value);
-            },
-            facet.items,
-          );
-        <div className={"mb-2 sm:w-1/2" ++ (ind == 0 ? " sm:mr-2" : "")}>
+      let (selected, first) =
+        switch (facet.value) {
+        | Value(value) =>
+          switch (
+            List.find(
+              (opt: ReactSelect.selectOption) =>
+                ReactSelect.valueGet(opt) == value,
+              Array.to_list(options),
+            )
+          ) {
+          | exception Not_found => (options[0], true)
+          | f => (f, false)
+          }
+        | None => (options[0], true)
+        };
+      <div className={"mb-2 sm:w-1/2" ++ (ind == 0 ? " sm:mr-2" : "")}>
+        {
+          let label = ReactSelect.labelGet(selected);
+          let label =
+            first ?
+              label :
+              Js.String.substring(
+                ~from=0,
+                ~to_=Js.String.indexOf("(", label) - 1,
+                label,
+              );
+
+          let value = ReactSelect.valueGet(selected);
+          let selected = ReactSelect.selectOption(~label, ~value);
           <ReactSelect
             options
+            selected
             onFocus=((_a, _b) => self.send(Focus))
-            onChange=(
-              (obj: ReactSelect.selectOption, action) =>
-                self.send(FacetClick(obj, action))
-            )
-            isLoading={self.state == Loading}
+            onChange=((obj, action) => self.send(FacetClick(obj, action)))
+            onMenuClose=(() => self.send(MenuClose))
+            isLoading={self.state.mode == Loading}
             loadingMessage=(_s => "Loading...")
             placeholder={facet.key}
-          />
-        </div>;
-      | Boolean =>
-        <div>
-          {
-            boolFacet(
-              _ => self.send(BooleanFacetClick(true)),
-              "1",
-              facet.key,
-            )
-          }
-        </div>
-      }
+          />;
+        }
+      </div>;
+    | Boolean =>
+      <div>
+        {boolFacet(_ => self.send(BooleanFacetClick(true)), "1", facet.key)}
+      </div>
     },
 };

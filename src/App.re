@@ -18,6 +18,7 @@ type state = {
   showImages: bool,
   limit: int,
   facets: Js.Dict.t(Finna.facet),
+  filters: array(Finna.filter),
   route,
   history: array(string),
 };
@@ -99,6 +100,7 @@ let make = _children => {
     result: None,
     recordResult: None,
     facets: Finna.getInitialFacets(),
+    filters: [||],
     route: Search,
     history: [||],
   },
@@ -176,7 +178,7 @@ let make = _children => {
               ~lookfor=self.state.text,
               ~filters=getActiveFilters(state.facets),
               ~page=self.state.page,
-              ~facetKey=Some(facetKey),
+              ~facetKey,
               ~onResults=results =>
               self.send(ReceiveFacetsCmd(facetKey, results, onLoaded))
             )
@@ -194,7 +196,7 @@ let make = _children => {
               Js.Dict.set(facets, facetKey, facetItem);
               ReasonReact.UpdateWithSideEffects(
                 {...state, facets},
-                (_s => onLoaded(FacetsLoaded)),
+                (_s => onLoaded(FacetsLoaded(facetItem))),
               );
             | None => ReasonReact.NoUpdate
             }
@@ -202,18 +204,34 @@ let make = _children => {
           }
         )
     | FacetResultsCmd(facetKey, value) =>
+      let filter: Finna.filter = {key: facetKey, value};
+      let filters =
+        List.filter(
+          (f: Finna.filter) => f.key != facetKey,
+          Array.to_list(state.filters),
+        )
+        |> Array.of_list;
+      let filters = Array.append(filters, [|filter|]);
       ReasonReact.UpdateWithSideEffects(
         {
           ...state,
           facets: setFacet(state.facets, facetKey, Finna.Value(value)),
+          filters,
         },
         (self => self.send(SearchCmd(state.text, true))),
-      )
+      );
     | ClearFacetCmd(facetKey) =>
+      let filters =
+        List.filter(
+          (f: Finna.filter) => f.key != facetKey,
+          Array.to_list(state.filters),
+        )
+        |> Array.of_list;
+      let facets = setFacet(state.facets, facetKey, Finna.None);
       ReasonReact.UpdateWithSideEffects(
-        {...state, facets: setFacet(state.facets, facetKey, Finna.None)},
+        {...state, facets, filters},
         (self => self.send(SearchCmd(state.text, true))),
-      )
+      );
     | RecordCmd(id) =>
       ReasonReact.UpdateWithSideEffects(
         {...state, route: Record(id), searchStatus: LoadingStatus},
@@ -271,14 +289,14 @@ let make = _children => {
             searchStatus={self.state.searchStatus}
             showImages={self.state.showImages}
             facets={self.state.facets}
-            activeFilters={getActiveFilters(self.state.facets)}
+            filters={self.state.filters}
+            activeFilters={self.state.filters}
             resultCnt
             records={self.state.records}
             pageCnt={self.state.pageCnt}
             page={self.state.page}
             isVisited=(
-              id => {
-                Js.log("visited: " ++ id);
+              id =>
                 switch (
                   List.find(
                     recId => recId == id,
@@ -287,8 +305,7 @@ let make = _children => {
                 ) {
                 | exception Not_found => false
                 | _ => true
-                };
-              }
+                }
             )
           />;
         | Record(id) =>
