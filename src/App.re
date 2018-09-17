@@ -2,6 +2,8 @@
 
 open Types;
 
+Style.init();
+
 type route =
   | Search
   | Record(string);

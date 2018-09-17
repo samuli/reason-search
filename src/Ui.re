@@ -39,7 +39,7 @@ module Results = {
           | LoadingStatus
           | LoadingMoreStatus =>
             <div>
-              <div className="px-5 pb-5 bg-grey-lighter">
+              <div className={Style.facets ++ " px-5 pb-5 bg-grey-lighter"}>
                 <Facets
                   facets
                   filters
@@ -54,11 +54,12 @@ module Results = {
                   onClearFacet=(filter => dispatch(ClearFacetCmd(filter)))
                 />
               </div>
-              <div className="info p-5 mb-2">
-                <strong>
+              <div className={Style.container ++ " info p-5 mb-2"}>
+                <p className=Style.searchResultsInfo>
                   {str("Results: " ++ string_of_int(resultCnt))}
-                </strong>
-                <ul className="results mt-5 list-reset">
+                </p>
+                <ul
+                  className={Style.searchResults ++ " results mt-5 list-reset"}>
                   {
                     ReasonReact.array(
                       Array.map(

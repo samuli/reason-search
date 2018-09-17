@@ -17,7 +17,7 @@ let make = (~lookfor, ~openUrl, ~onSearch, _children) => {
       ReasonReact.NoUpdate;
     },
   render: self =>
-    <div className="bg-grey-lighter p-5">
+    <div className={Style.searchBox ++ " bg-grey-lighter p-5"}>
       <input
         id="search"
         className="search edit border border-gray border-solid p-2 w-full"

@@ -75,13 +75,13 @@ let make =
         onClick
         key={record.id}
         className={
-          "record py-1 border-b border-solid border-grey hover:bg-grey-light cursor-pointer"
-          ++ (isVisited ? " bg-blue-lighter" : "")
+          Style.recordList(~visited=isVisited)
+          ++ " record py-1 border-b border-solid border-grey hover:bg-grey-light cursor-pointer"
         }>
         <a
           className="link font-hairline no-underline cursor-pointer"
           target="_finna">
-          <h3 className="font-normal text-base"> {str(record.title)} </h3>
+          <h2 className="font-normal text-base"> {str(record.title)} </h2>
         </a>
         <p>
           authors
@@ -93,13 +93,12 @@ let make =
             }
           }
         </p>
-        publishers
-        year
+        <p> publishers year </p>
       </li>
     /* <FormatIcon record /> */
     | Full =>
-      <div>
-        <h2> {str(record.title)} </h2>
+      <div className=Style.recordFull>
+        <h1> {str(record.title)} </h1>
         <div className="my-2">
           authors
           {

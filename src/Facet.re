@@ -114,7 +114,10 @@ let make =
           }
         | None => (options[0], true)
         };
-      <div className={"mb-2 sm:w-1/2" ++ (ind == 0 ? " sm:mr-2" : "")}>
+      <div
+        className={
+          Style.facetMenu ++ " mb-2 sm:w-1/2" ++ (ind == 0 ? " sm:mr-2" : "")
+        }>
         {
           let label = ReactSelect.labelGet(selected);
           let label =

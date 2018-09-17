@@ -7,8 +7,8 @@
     "clean": "bsb -clean-world",
     "test": "echo \"Error: no test specified\" && exit 1",
     "webpack": "webpack -w",
-      "webpack:production": "NODE_ENV=production webpack",
-      "server": "python3 -m http.server 8080"
+    "webpack:production": "NODE_ENV=production webpack",
+    "server": "python3 -m http.server 8080"
   },
   "keywords": [
     "BuckleScript"
@@ -17,6 +17,7 @@
   "license": "MIT",
   "dependencies": {
     "@glennsl/bs-json": "^3.0.0",
+    "bs-css": "^7.2.0",
     "bs-fetch": "^0.3.0",
     "bs-webapi": "^0.11.0",
     "react": "^16.2.0",

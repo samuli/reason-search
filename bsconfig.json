@@ -21,7 +21,8 @@
       "reason-react",
       "@glennsl/bs-json",
       "bs-fetch",
-      "bs-webapi"
+      "bs-webapi",
+      "bs-css"
   ],
     "refmt": 3,
     "bsc-flags": ["-bs-g"]

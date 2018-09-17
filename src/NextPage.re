@@ -5,7 +5,7 @@ let component = ReasonReact.statelessComponent("NextPage");
 let make = (~loading, ~pageCnt, ~page, ~onNextPage, _children) => {
   ...component,
   render: _self =>
-    <div className="mt-5">
+    <div className=Style.nextPage>
       {
         !loading && pageCnt > page ?
           <div
