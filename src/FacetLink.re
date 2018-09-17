@@ -15,7 +15,7 @@ let make = (~label, ~facetKey, ~value, ~onSelect, ~isActive, _children) => {
           isActive ?
             {
               ReactEventRe.Mouse.stopPropagation(ev);
-              onSelect(facetKey, value);
+              onSelect(facetKey, value, label);
             } :
             ()
       }

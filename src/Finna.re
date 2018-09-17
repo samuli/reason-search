@@ -41,6 +41,7 @@ type facet = {
 type filter = {
   key: string,
   value: string,
+  label: option(string),
 };
 
 type author = {
@@ -245,7 +246,7 @@ let search = (~lookfor, ~filters, ~page, ~limit, ~onResults, ~facetKey=?, ()) =>
     | _ => {j|&facet[]=$facetKey&facetFilter[]=$facetKey%3A0%2F.*|j}
     };
 
-  let url = {j|$apiUrl/api/v1/search?lookfor=$lookfor&type=AllFields&field[]=id&field[]=formats&field[]=title&field[]=images&field[]=authors&field[]=year&field[]=publishers&sort=$sort%2Cid%20asc&page=$page&limit=$limit&prettyPrint=false&lng=$lng$facetStr&$filterStr|j};
+  let url = {j|$apiUrl/api/v1/search?lookfor=$lookfor&type=AllFields&field[]=id&field[]=formats&field[]=buildings&field[]=title&field[]=images&field[]=authors&field[]=year&field[]=publishers&sort=$sort%2Cid%20asc&page=$page&limit=$limit&prettyPrint=false&lng=$lng$facetStr&$filterStr|j};
 
   Js.log(url);
   Js.Promise.(

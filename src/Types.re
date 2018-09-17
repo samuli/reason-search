@@ -5,7 +5,7 @@ type action =
   | NextPageCmd
   | GetFacetsCmd(string, Facet.action => unit)
   | ReceiveFacetsCmd(string, Finna.searchResponse, Facet.action => unit)
-  | FacetResultsCmd(string, string)
+  | FacetResultsCmd(string, string, string)
   | ClearFacetCmd(string)
   | RecordCmd(string)
   | CloseRecordCmd

@@ -19,7 +19,9 @@ let make = (~lookfor, ~openUrl, ~onSearch, _children) => {
   render: self =>
     <div className={Style.searchBox ++ " bg-grey-lighter p-5"}>
       <input
+        type_="search"
         id="search"
+        placeholder="Search..."
         className="search edit border border-gray border-solid p-2 w-full"
         value={self.state.text}
         onChange={

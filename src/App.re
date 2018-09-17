@@ -26,18 +26,17 @@ type state = {
 };
 
 let urlChange = (send, url: ReasonReact.Router.url) => {
-  Js.log(url.hash);
   let hash = url.hash;
   switch (hash) {
   | "/"
   | "" => send(CloseRecordCmd)
   | _ =>
     let hash = String.sub(url.hash, 1, String.length(url.hash) - 1);
-    Js.log(Js.String.split("/", hash));
     switch (Js.String.split("/", hash)) {
     | [|"Record", id|] => send(RecordCmd(id))
     | [|"Search", params|] =>
       switch (Js.String.split("=", params)) {
+      | [|"lookfor", ""|] => ()
       | [|"lookfor", lookfor|] =>
         send(SearchCmd(Js_global.decodeURIComponent(lookfor), true))
       | [||] => send(CloseRecordCmd)
@@ -60,14 +59,14 @@ let setFacet =
 
 let getActiveFilters = facets => {
   let values = Js.Dict.values(facets);
-  let filterDummy: Finna.filter = {key: "", value: ""};
+  let filterDummy: Finna.filter = {key: "", value: "", label: None};
   let filters = ArrayLabels.make(Array.length(values), filterDummy);
   Array.iteri(
     (i, facet: Finna.facet) =>
       switch (facet.value) {
       | None => ()
       | Value(value) =>
-        let filter: Finna.filter = {key: facet.key, value};
+        let filter: Finna.filter = {key: facet.key, value, label: None};
         filters[i] = filter;
       },
     values,
@@ -205,8 +204,8 @@ let make = _children => {
           | None => ReasonReact.NoUpdate
           }
         )
-    | FacetResultsCmd(facetKey, value) =>
-      let filter: Finna.filter = {key: facetKey, value};
+    | FacetResultsCmd(facetKey, value, label) =>
+      let filter: Finna.filter = {key: facetKey, value, label: Some(label)};
       let filters =
         List.filter(
           (f: Finna.filter) => f.key != facetKey,

@@ -11,7 +11,7 @@ let make = (~loading, ~pageCnt, ~page, ~onNextPage, _children) => {
           <div
             onClick=onNextPage
             className="paginate-next bg-grey-light p-2 rounded cursor-pointer hover:bg-grey">
-            {str("next")}
+            {str("More results")}
           </div> :
           ReasonReact.null
       }

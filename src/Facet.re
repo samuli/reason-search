@@ -65,11 +65,16 @@ let make =
     | FacetClick((obj: ReactSelect.selectOption), _action) =>
       switch (ReactSelect.valueGet(obj)) {
       | "*" => onClearFacet(facet.key)
-      | _ => onSelectFacet(facet.key, ReactSelect.valueGet(obj))
+      | _ =>
+        onSelectFacet(
+          facet.key,
+          ReactSelect.valueGet(obj),
+          ReactSelect.labelGet(obj),
+        )
       };
       ReasonReact.Update({...state, mode: Closed});
     | BooleanFacetClick(selected) =>
-      onSelectFacet(facet.key, selected ? "1" : "0");
+      onSelectFacet(facet.key, selected ? "1" : "0", "");
       ReasonReact.NoUpdate;
     | FacetsLoaded(facet) =>
       ReasonReact.Update({...state, mode: Loaded, facet})
@@ -102,16 +107,34 @@ let make =
       let (selected, first) =
         switch (facet.value) {
         | Value(value) =>
-          switch (
-            List.find(
-              (opt: ReactSelect.selectOption) =>
-                ReactSelect.valueGet(opt) == value,
-              Array.to_list(options),
+          Array.length(options) == 1 ?
+            switch (
+              List.find(
+                (f: Finna.filter) => f.key == facet.key,
+                Array.to_list(filters),
+              )
+            ) {
+            | exception Not_found => (options[0], true)
+            | f =>
+              let label =
+                switch (f.label) {
+                | Some(l) => l
+                | None => ""
+                };
+              (ReactSelect.selectOption(~label, ~value=f.value), true);
+            } :
+            (
+              switch (
+                List.find(
+                  (opt: ReactSelect.selectOption) =>
+                    ReactSelect.valueGet(opt) == value,
+                  Array.to_list(options),
+                )
+              ) {
+              | exception Not_found => (options[0], true)
+              | f => (f, false)
+              }
             )
-          ) {
-          | exception Not_found => (options[0], true)
-          | f => (f, false)
-          }
         | None => (options[0], true)
         };
       <div

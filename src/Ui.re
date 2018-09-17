@@ -48,8 +48,8 @@ module Results = {
                       dispatch(GetFacetsCmd(facetKey, onLoaded))
                   )
                   onSelectFacet=(
-                    (facetKey, facetValue) =>
-                      dispatch(FacetResultsCmd(facetKey, facetValue))
+                    (facetKey, facetValue, label) =>
+                      dispatch(FacetResultsCmd(facetKey, facetValue, label))
                   )
                   onClearFacet=(filter => dispatch(ClearFacetCmd(filter)))
                 />
@@ -69,9 +69,13 @@ module Results = {
                             record=r
                             onClick={_e => openUrl("/Record/" ++ r.id)}
                             onSelectFacet={
-                              (facetKey, facetValue) =>
+                              (facetKey, facetValue, label) =>
                                 dispatch(
-                                  FacetResultsCmd(facetKey, facetValue),
+                                  FacetResultsCmd(
+                                    facetKey,
+                                    facetValue,
+                                    label,
+                                  ),
                                 )
                             }
                             filters=activeFilters
@@ -86,14 +90,14 @@ module Results = {
                 {
                   searchStatus == LoadingStatus
                   || searchStatus == LoadingMoreStatus ?
-                    <Loading padding=1 /> : ReasonReact.null
+                    <Loading padding=1 /> :
+                    <NextPage
+                      loading={searchStatus == LoadingMoreStatus}
+                      pageCnt
+                      page
+                      onNextPage=(_ => dispatch(NextPageCmd))
+                    />
                 }
-                <NextPage
-                  loading={searchStatus == LoadingMoreStatus}
-                  pageCnt
-                  page
-                  onNextPage=(_ => dispatch(NextPageCmd))
-                />
               </div>
             </div>
           | NoResultsStatus =>
@@ -129,8 +133,8 @@ module RecordPage = {
               record
               onClick=(_e => openUrl("/Record/" ++ record.id))
               onSelectFacet=(
-                (facetKey, facetValue) =>
-                  dispatch(FacetResultsCmd(facetKey, facetValue))
+                (facetKey, facetValue, label) =>
+                  dispatch(FacetResultsCmd(facetKey, facetValue, label))
               )
               filters=activeFilters
               showImages=true

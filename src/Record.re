@@ -28,7 +28,10 @@ let make =
       switch (record.authors) {
       | [||] => ReasonReact.null
       | authors =>
-        <span className="authors text-sm font-semibold mr-2">
+        <span
+          className={
+            Style.padRight(0.5) ++ " authors text-sm font-semibold mr-2"
+          }>
           {str(Js.Array.joinWith(", ", authors))}
         </span>
       };

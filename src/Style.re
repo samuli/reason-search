@@ -30,28 +30,31 @@ let init = () => {
       maxWidth(pct(100.0)),
       minWidth(pct(100.0)),
       width(pct(100.0)),
-      padding(rem(0.7)),
+      padding(rem(0.5)),
       fontSize(pct(100.0)),
       borderRadius(em(0.2)),
       borderWidth(px(1)),
       borderColor(hex("d8d8d8")),
+      placeholder([opacity(50.0)]),
     ],
   );
 };
 
-let buttonStyles = (~r, ~m, ~p) => [
-  padding(p),
-  margin(m),
-  backgroundColor(greyLight),
-  borderRadius(rem(r)),
-  cursor(`pointer),
-  hover([backgroundColor(greyLighter)]),
-];
-
 let loader = style([padding(basePadding)]);
-let nextPage = style(buttonStyles(~r=0.5, ~p=basePadding, ~m=basePadding));
+let nextPage =
+  style([
+    textAlign(`center),
+    padding(basePadding),
+    margin(basePadding),
+    backgroundColor(greyLight),
+    borderRadius(rem(0.5)),
+    cursor(`pointer),
+    focus([outlineStyle(`none), borderColor(blue)]),
+    hover([backgroundColor(greyLighter)]),
+  ]);
 
 let searchBox = style([backgroundColor(greyLight), padding(basePadding)]);
+
 let facets =
   style([
     backgroundColor(greyLighter),
@@ -59,13 +62,24 @@ let facets =
     borderBottom(px(1), solid, greyLight),
   ]);
 let facetMenu = style([padding2(~h=px(0), ~v=em(0.2))]);
-let facetLink = style(buttonStyles(~r=0.2, ~p=em(0.2), ~m=em(0.2)));
+
+let facetLink =
+  style([
+    fontSize(em(0.9)),
+    /* margin2(~v=px(0), ~h=em(0.5)), */
+    padding2(~v=em(0.1), ~h=em(0.5)),
+    marginRight(em(0.3)),
+    backgroundColor(greyLight),
+    borderRadius(rem(0.4)),
+    cursor(`pointer),
+    hover([backgroundColor(greyLighter)]),
+  ]);
 
 let searchResults = style([]);
 let searchResultsInfo = style([padding(basePadding), fontWeight(800)]);
 
 let container = style([]);
-let pad = style([padding(basePadding)]);
+let padRight = p => style([paddingRight(em(p))]);
 let recordList = (~visited) =>
   style([
     borderBottom(px(1), solid, greyLight),
