@@ -6,8 +6,7 @@ module Error = {
 
   let make = (~message, _children) => {
     ...component,
-    render: _self =>
-      <div className="error mt-3 p-5 bg-red"> {str(message)} </div>,
+    render: _self => <div className=Style.error> {str(message)} </div>,
   };
 };
 
@@ -32,14 +31,14 @@ module Results = {
       ) => {
     ...component,
     render: _self =>
-      <div className="">
+      <div>
         {
           switch (searchStatus) {
           | ResultsStatus
           | LoadingStatus
           | LoadingMoreStatus =>
             <div>
-              <div className={Style.facets ++ " px-5 pb-5 bg-grey-lighter"}>
+              <div className=Style.facets>
                 <Facets
                   facets
                   filters
@@ -54,12 +53,15 @@ module Results = {
                   onClearFacet=(filter => dispatch(ClearFacetCmd(filter)))
                 />
               </div>
-              <div className={Style.container ++ " info p-5 mb-2"}>
-                <p className=Style.searchResultsInfo>
-                  {str("Results: " ++ string_of_int(resultCnt))}
-                </p>
-                <ul
-                  className={Style.searchResults ++ " results mt-5 list-reset"}>
+              <div className=Style.container>
+                {
+                  searchStatus == ResultsStatus ?
+                    <p className=Style.searchResultsInfo>
+                      {str("Results: " ++ string_of_int(resultCnt))}
+                    </p> :
+                    ReasonReact.null
+                }
+                <ul className=Style.searchResults>
                   {
                     ReasonReact.array(
                       Array.map(
@@ -101,7 +103,7 @@ module Results = {
               </div>
             </div>
           | NoResultsStatus =>
-            <div className="mt-3"> {str("No results")} </div>
+            <div className=Style.pad> {str("No results")} </div>
           | _ => ReasonReact.null
           }
         }
@@ -123,7 +125,7 @@ module RecordPage = {
       ) => {
     ...component,
     render: _self =>
-      <div className="p-5">
+      <div>
         {
           switch (searchStatus) {
           | LoadingStatus => <Loading padding=5 />

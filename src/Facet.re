@@ -26,7 +26,7 @@ let component = ReasonReact.reducerComponent("Facet");
 let boolFacet = (onClick, value, _label) =>
   <span>
     <label>
-      <input type_="checkbox" onClick value checked={value == "0"} />
+      <input type_="checkbox" onClick value checked={value == "true"} />
     </label>
   </span>;
 
@@ -74,7 +74,11 @@ let make =
       };
       ReasonReact.Update({...state, mode: Closed});
     | BooleanFacetClick(selected) =>
-      onSelectFacet(facet.key, selected ? "1" : "0", "");
+      if (selected) {
+        onSelectFacet(facet.key, "1", "");
+      } else {
+        onClearFacet(facet.key);
+      };
       ReasonReact.NoUpdate;
     | FacetsLoaded(facet) =>
       ReasonReact.Update({...state, mode: Loaded, facet})
@@ -168,7 +172,18 @@ let make =
       </div>;
     | Boolean =>
       <div>
-        {boolFacet(_ => self.send(BooleanFacetClick(true)), "1", facet.key)}
+        {
+          let selected =
+            switch (facet.value) {
+            | Value(value) => true
+            | None => false
+            };
+          boolFacet(
+            _ => self.send(BooleanFacetClick(!selected)),
+            string_of_bool(selected),
+            facet.key,
+          );
+        }
       </div>
     },
 };

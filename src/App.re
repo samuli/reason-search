@@ -166,10 +166,11 @@ let make = _children => {
     | ToggleImagesCmd =>
       ReasonReact.Update({...state, showImages: !state.showImages})
     | NextPageCmd =>
+      Js.log("next");
       ReasonReact.UpdateWithSideEffects(
         {...state, page: state.page + 1},
         (self => self.send(SearchCmd(state.text, false))),
-      )
+      );
     | GetFacetsCmd(facetKey, onLoaded) =>
       ReasonReact.UpdateWithSideEffects(
         state,

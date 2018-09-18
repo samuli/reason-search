@@ -9,7 +9,7 @@ let make = (~label, ~facetKey, ~value, ~onSelect, ~isActive, _children) => {
       Style.facetLink
       ++ " cursor-pointer mr-2 text-xs formats uppercase pl-1 pr-1 bg-grey-light"
       ++ (isActive ? " hover:bg-grey" : "");
-    <span
+    <div
       onClick={
         ev =>
           isActive ?
@@ -21,6 +21,6 @@ let make = (~label, ~facetKey, ~value, ~onSelect, ~isActive, _children) => {
       }
       className>
       {str(label)}
-    </span>;
+    </div>;
   },
 };

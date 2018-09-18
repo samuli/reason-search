@@ -50,7 +50,7 @@ let nextPage =
     borderRadius(rem(0.5)),
     cursor(`pointer),
     focus([outlineStyle(`none), borderColor(blue)]),
-    hover([backgroundColor(greyLighter)]),
+    hover([backgroundColor(hex("cacdd0"))]),
   ]);
 
 let searchBox = style([backgroundColor(greyLight), padding(basePadding)]);
@@ -65,28 +65,36 @@ let facetMenu = style([padding2(~h=px(0), ~v=em(0.2))]);
 
 let facetLink =
   style([
+    display(`inlineBlock),
     fontSize(em(0.9)),
-    /* margin2(~v=px(0), ~h=em(0.5)), */
     padding2(~v=em(0.1), ~h=em(0.5)),
     marginRight(em(0.3)),
     backgroundColor(greyLight),
     borderRadius(rem(0.4)),
     cursor(`pointer),
-    hover([backgroundColor(greyLighter)]),
+    hover([backgroundColor(hex("cacdd0"))]),
   ]);
 
 let searchResults = style([]);
 let searchResultsInfo = style([padding(basePadding), fontWeight(800)]);
 
 let container = style([]);
+let pad = style([padding(basePadding)]);
 let padRight = p => style([paddingRight(em(p))]);
+let error = style([padding(basePadding), color(red)]);
+
 let recordList = (~visited) =>
   style([
     borderBottom(px(1), solid, greyLight),
-    padding2(~v=em(0.5), ~h=em(1.0)),
+    padding2(~v=em(0.2), ~h=em(1.0)),
     backgroundColor(visited ? hex("eff8ff") : white),
     hover([backgroundColor(greyLighter)]),
     cursor(`pointer),
   ]);
 
 let recordFull = style([padding(basePadding)]);
+let recordImages = style([marginTop(em(1.0))]);
+let recordImage = style([marginTop(em(0.5))]);
+let recordAuthors = style([fontWeight(600), marginRight(em(0.5))]);
+let recrodPublisher = style([marginRight(em(0.3)), fontSize(em(0.9))]);
+let recordYear = style([fontSize(em(0.9))]);

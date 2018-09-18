@@ -2,7 +2,7 @@ let apiUrl = "https://api.finna.fi";
 let baseUrl = "https://finna.fi";
 let recordBaseUrl = baseUrl ++ "/Record/";
 
-type facetLabelVariant =
+type facettyLabelVariant =
   | String(string)
   | Int(int);
 

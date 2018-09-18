@@ -28,10 +28,7 @@ let make =
       switch (record.authors) {
       | [||] => ReasonReact.null
       | authors =>
-        <span
-          className={
-            Style.padRight(0.5) ++ " authors text-sm font-semibold mr-2"
-          }>
+        <span className=Style.recordAuthors>
           {str(Js.Array.joinWith(", ", authors))}
         </span>
       };
@@ -39,7 +36,7 @@ let make =
     let publishers =
       switch (record.publishers) {
       | Some(publishers) when Array.length(publishers) > 0 =>
-        <span className="publishers text-sm mr-2">
+        <span className=Style.recrodPublisher>
           {str(Js.Array.joinWith(", ", publishers))}
         </span>
       | _ => ReasonReact.null
@@ -47,7 +44,7 @@ let make =
 
     let year =
       switch (record.year) {
-      | Some(year) => <span className="year text-sm"> {str(year)} </span>
+      | Some(year) => <span className=Style.recordYear> {str(year)} </span>
       | None => ReasonReact.null
       };
 
@@ -111,17 +108,18 @@ let make =
             }
           }
         </div>
-        <div>
+        <div className=Style.recordImages>
           {
             ReasonReact.array(
               Array.map(
-                img => <div> <img className="mb-1" src=img /> </div>,
+                img =>
+                  <div> <img className=Style.recordImage src=img /> </div>,
                 Array.sub(imgs, 0, min(Array.length(imgs), 5)),
               ),
             )
           }
         </div>
-        <p className="mt-1">
+        <p>
           <a href={Finna.recordBaseUrl ++ record.id}> {str("Finna")} </a>
         </p>
       </div>

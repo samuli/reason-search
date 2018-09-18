@@ -1,5 +1,18 @@
 let component = ReasonReact.statelessComponent("Facets");
 
+let titles =
+  Js.Dict.fromArray([|("building", "location"), ("format", "format")|]);
+
+let getTitle = key =>
+  "All "
+  ++ (
+    switch (Js.Dict.get(titles, key)) {
+    | Some(value) => value
+    | _ => key
+    }
+  )
+  ++ "s";
+
 let make =
     (
       ~onGetFacets,
@@ -11,7 +24,7 @@ let make =
     ) => {
   ...component,
   render: _self =>
-    <div className="flex sm:flex-row flex-col">
+    <div>
       {
         ReasonReact.array(
           facets
@@ -24,7 +37,7 @@ let make =
                  onClearFacet
                  facet
                  filters
-                 title={"All " ++ facet.key ++ "s"}
+                 title={getTitle(facet.key)}
                />
              ),
         )
