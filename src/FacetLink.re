@@ -4,11 +4,7 @@ let component = ReasonReact.statelessComponent("FacetLink");
 
 let make = (~label, ~facetKey, ~value, ~onSelect, ~isActive, _children) => {
   ...component,
-  render: _self => {
-    let className =
-      Style.facetLink
-      ++ " cursor-pointer mr-2 text-xs formats uppercase pl-1 pr-1 bg-grey-light"
-      ++ (isActive ? " hover:bg-grey" : "");
+  render: _self =>
     <div
       onClick={
         ev =>
@@ -19,8 +15,7 @@ let make = (~label, ~facetKey, ~value, ~onSelect, ~isActive, _children) => {
             } :
             ()
       }
-      className>
+      className={Style.facetLink(isActive)}>
       {str(label)}
-    </div>;
-  },
+    </div>,
 };

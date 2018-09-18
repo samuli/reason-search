@@ -63,7 +63,7 @@ let facets =
   ]);
 let facetMenu = style([padding2(~h=px(0), ~v=em(0.2))]);
 
-let facetLink =
+let facetLink = active =>
   style([
     display(`inlineBlock),
     fontSize(em(0.9)),
@@ -72,7 +72,7 @@ let facetLink =
     backgroundColor(greyLight),
     borderRadius(rem(0.4)),
     cursor(`pointer),
-    hover([backgroundColor(hex("cacdd0"))]),
+    hover(active ? [backgroundColor(hex("cacdd0"))] : []),
   ]);
 
 let searchResults = style([]);
