@@ -11,7 +11,21 @@ module Error = {
 };
 
 module Results = {
-  let component = ReasonReact.statelessComponent("Results");
+  let isVisited = (history, id) =>
+    switch (List.find(recId => recId == id, Array.to_list(history))) {
+    | exception Not_found => false
+    | _ => true
+    };
+
+  type state = {history: array(string)};
+
+  type action =
+    | Init(state)
+    | OpenRecord(string);
+
+  let component = ReasonReact.reducerComponent("Results");
+
+  let stateMemory: ref(state) = ref({history: [||]});
 
   let make =
       (
@@ -26,11 +40,21 @@ module Results = {
         ~records,
         ~pageCnt,
         ~page,
-        ~isVisited,
         _children,
       ) => {
     ...component,
-    render: _self =>
+    initialState: () => {history: [||]},
+    didMount: self => self.send(Init(stateMemory^)),
+    willUnmount: self => stateMemory := self.state,
+    reducer: (action: action, state: state) =>
+      switch (action) {
+      | OpenRecord(id) =>
+        openUrl("/Record/" ++ id);
+        ReasonReact.Update({history: Array.append(state.history, [|id|])});
+      | Init(state) => ReasonReact.Update(state)
+      | _ => ReasonReact.NoUpdate
+      },
+    render: self =>
       <div>
         {
           switch (searchStatus) {
@@ -69,7 +93,8 @@ module Results = {
                           <Record
                             details=Record.List
                             record=r
-                            onClick={_e => openUrl("/Record/" ++ r.id)}
+                            onClick={_e => self.send(OpenRecord(r.id))}
+                            /* onClick={_e => openUrl("/Record/" ++ r.id)} */
                             onSelectFacet={
                               (facetKey, facetValue, label) =>
                                 dispatch(
@@ -82,7 +107,7 @@ module Results = {
                             }
                             filters=activeFilters
                             showImages
-                            isVisited={isVisited(r.id)}
+                            isVisited={isVisited(self.state.history, r.id)}
                           />,
                         records,
                       ),
@@ -145,5 +170,32 @@ module RecordPage = {
           }
         }
       </div>,
+  };
+};
+
+module Ui = {
+  type screen =
+    | Results
+    | Record;
+
+  let component = ReasonReact.statelessComponent("Ui");
+
+  let make =
+      (
+        ~screen,
+        ~dispatch,
+        ~openUrl,
+        ~searchStatus,
+        ~facets,
+        ~filters,
+        ~activeFilters,
+        ~resultCnt,
+        ~pageCnt,
+        ~records,
+        ~page,
+        _children,
+      ) => {
+    ...component,
+    render: _self => <div> {str("ui")} </div>,
   };
 };

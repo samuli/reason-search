@@ -42,7 +42,6 @@ type state = {
   facets: Js.Dict.t(Finna.facet),
   filters: array(Finna.filter),
   route,
-  history: array(string),
 };
 
 let urlChange = (send, url: ReasonReact.Router.url) => {
@@ -123,7 +122,6 @@ let make = _children => {
     facets: Finna.getInitialFacets(),
     filters: [||],
     route: Search,
-    history: [||],
   },
   reducer: (action: action, state: state) =>
     switch (action) {
@@ -275,11 +273,7 @@ let make = _children => {
       };
       switch (result.record) {
       | Some(record) =>
-        let newState = {
-          ...newState,
-          record: Some(record),
-          history: Array.append(state.history, [|record.id|]),
-        };
+        let newState = {...newState, record: Some(record)};
         ReasonReact.Update(newState);
       | None => ReasonReact.Update(newState)
       };
@@ -318,18 +312,6 @@ let make = _children => {
             records={self.state.records}
             pageCnt={self.state.pageCnt}
             page={self.state.page}
-            isVisited=(
-              id =>
-                switch (
-                  List.find(
-                    recId => recId == id,
-                    Array.to_list(self.state.history),
-                  )
-                ) {
-                | exception Not_found => false
-                | _ => true
-                }
-            )
           />;
         | Record(id) =>
           switch (self.state.recordResult) {
