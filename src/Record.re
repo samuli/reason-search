@@ -21,7 +21,8 @@ let make =
     let imgs =
       switch (showImages) {
       | false => [||]
-      | true => Array.map(img => Finna.apiUrl ++ img, record.images)
+      | true =>
+        Array.map(img => Finna.apiUrl ++ img ++ "&size=medium", record.images)
       };
 
     let authors =
@@ -95,7 +96,6 @@ let make =
         </p>
         <p> publishers year </p>
       </li>
-    /* <FormatIcon record /> */
     | Full =>
       <div className=Style.recordFull>
         <h1> {str(record.title)} </h1>
@@ -113,8 +113,13 @@ let make =
             ReasonReact.array(
               Array.map(
                 img =>
-                  <div> <img className=Style.recordImage src=img /> </div>,
-                Array.sub(imgs, 0, min(Array.length(imgs), 5)),
+                  <div>
+                    <img
+                      className={Style.recordImage ++ " record-image"}
+                      href=img
+                    />
+                  </div>,
+                imgs,
               ),
             )
           }

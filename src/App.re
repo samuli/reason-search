@@ -1,5 +1,25 @@
 [%%debugger.chrome];
 
+type iw;
+type el = Webapi.Dom.Element.t;
+[@bs.module] external inview: string => iw = "in-view";
+[@bs.send] external on: (iw, string, el => unit) => unit = "";
+
+let registerInview = () => {
+  let i = inview(".record-image");
+  on(i, "enter", el =>
+    switch (Webapi.Dom.Element.getAttribute("data-inview", el)) {
+    | Some(_val) => ()
+    | _ =>
+      Webapi.Dom.Element.setAttribute("data-inview", "1", el);
+      switch (Webapi.Dom.Element.getAttribute("href", el)) {
+      | Some(url) => Webapi.Dom.Element.setAttribute("src", url, el)
+      | _ => ()
+      };
+    }
+  );
+};
+
 open Types;
 
 Style.init();
@@ -265,6 +285,7 @@ let make = _children => {
       };
     | CloseRecordCmd => ReasonReact.Update({...state, route: Search})
     },
+  didUpdate: ({oldSelf: _self, newSelf: _newSelf}) => registerInview(),
   render: self =>
     <div>
       <SearchField

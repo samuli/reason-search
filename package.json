@@ -20,6 +20,7 @@
     "bs-css": "^7.2.0",
     "bs-fetch": "^0.3.0",
     "bs-webapi": "^0.11.0",
+    "in-view": "^0.6.1",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
     "react-select": "^2.0.0",

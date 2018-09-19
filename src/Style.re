@@ -94,7 +94,12 @@ let recordList = (~visited) =>
 
 let recordFull = style([padding(basePadding)]);
 let recordImages = style([marginTop(em(1.0))]);
-let recordImage = style([marginTop(em(0.5))]);
+let recordImage =
+  style([
+    marginTop(em(0.5)),
+    minHeight(px(100)),
+    backgroundColor(greyLight),
+  ]);
 let recordAuthors = style([fontWeight(600), marginRight(em(0.5))]);
 let recrodPublisher = style([marginRight(em(0.3)), fontSize(em(0.9))]);
 let recordYear = style([fontSize(em(0.9))]);

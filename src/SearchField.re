@@ -38,8 +38,8 @@ let make = (~lookfor, ~openUrl, ~onSearch, _children) => {
         autoFocus=true
       />
     </div>,
-  willReceiveProps: self => {text: lookfor},
-  didMount: self => {
+  willReceiveProps: _self => {text: lookfor},
+  didMount: _self => {
     let _x = [%bs.raw {| document.getElementById("search").focus() |}];
     ();
   },
