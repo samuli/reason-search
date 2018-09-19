@@ -1,20 +1,16 @@
 type state = {text: string};
 
 type action =
-  | Change(string)
-  | Search;
+  | Change(string);
 
 let component = ReasonReact.reducerComponent("SearchField");
 
 let make = (~lookfor, ~openUrl, ~onSearch, _children) => {
   ...component,
   initialState: () => {text: lookfor},
-  reducer: (action: action, state: state) =>
+  reducer: (action: action, _state: state) =>
     switch (action) {
     | Change(text) => ReasonReact.Update({text: text})
-    | Search =>
-      onSearch(state.text);
-      ReasonReact.NoUpdate;
     },
   render: self =>
     <div className=Style.searchBox>
@@ -30,7 +26,9 @@ let make = (~lookfor, ~openUrl, ~onSearch, _children) => {
           ev =>
             if (ReactEvent.Keyboard.keyCode(ev) === 13) {
               ReactEvent.Keyboard.preventDefault(ev);
-              openUrl("/Search/lookfor=" ++ self.state.text);
+              onSearch(self.state.text);
+              /* self.send(Change(ReactEvent.Form.target(ev)##value)) */
+              /* openUrl("/Search/lookfor=" ++ self.state.text); */
             }
         }
         autoFocus=true

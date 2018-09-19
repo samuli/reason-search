@@ -1,11 +1,12 @@
 type searchActionType =
-  | New
+  | Search
+  | NewSearch
   | MoreResults
-  | FacetResults
   | BackToResults;
 
 type action =
-  | SearchCmd(string, bool, bool)
+  | OnSearch(string)
+  | SearchCmd(string, searchActionType)
   | ResultsCmd(Finna.searchResponse)
   | ToggleImagesCmd
   | NextPageCmd

@@ -44,7 +44,7 @@ type state = {
   route,
 };
 
-let urlChange = (send, url: ReasonReact.Router.url) => {
+let urlChange = (send, _state, url: ReasonReact.Router.url) => {
   let hash = url.hash;
   switch (hash) {
   | "/"
@@ -57,7 +57,8 @@ let urlChange = (send, url: ReasonReact.Router.url) => {
       switch (Js.String.split("=", params)) {
       | [|"lookfor", ""|] => ()
       | [|"lookfor", lookfor|] =>
-        send(SearchCmd(Js_global.decodeURIComponent(lookfor), true, false))
+        let lookfor = Js_global.decodeURIComponent(lookfor);
+        send(SearchCmd(lookfor, Search));
       | _ => send(CloseRecordCmd)
       }
     | _ => ()
@@ -125,8 +126,28 @@ let make = _children => {
   },
   reducer: (action: action, state: state) =>
     switch (action) {
-    | SearchCmd(text, newSearch, searchMore) =>
-      if (newSearch || searchMore || text != state.text) {
+    | OnSearch(text) =>
+      openUrl("/Search/lookfor=" ++ text);
+      ReasonReact.Update({...state, text: ""});
+    /* (self => self.send(SearchCmd(text, NewSearch))), */
+    | SearchCmd(text, searchType) =>
+      switch (searchType) {
+      | BackToResults
+      | Search when text == state.text =>
+        ReasonReact.Update({
+          ...state,
+          text,
+          route: Search,
+          searchStatus: ResultsStatus,
+        })
+      | _ =>
+        let newSearch =
+          switch (searchType) {
+          | NewSearch => true
+          | MoreResults => false
+          | Search when text != state.text => true
+          | _ => false
+          };
         ReasonReact.UpdateWithSideEffects(
           {
             ...state,
@@ -148,12 +169,6 @@ let make = _children => {
               )
           ),
         );
-      } else {
-        ReasonReact.Update({
-          ...state,
-          route: Search,
-          searchStatus: ResultsStatus,
-        });
       }
     | ResultsCmd((response: Finna.searchResponse)) =>
       response.error ?
@@ -192,11 +207,10 @@ let make = _children => {
     | ToggleImagesCmd =>
       ReasonReact.Update({...state, showImages: !state.showImages})
     | NextPageCmd =>
-      Js.log("next");
       ReasonReact.UpdateWithSideEffects(
         {...state, page: state.page + 1},
-        (self => self.send(SearchCmd(state.text, false, true))),
-      );
+        (self => self.send(SearchCmd(state.text, MoreResults))),
+      )
     | GetFacetsCmd(facetKey, onLoaded) =>
       ReasonReact.UpdateWithSideEffects(
         state,
@@ -246,7 +260,7 @@ let make = _children => {
           facets: setFacet(state.facets, facetKey, Finna.Value(value)),
           filters,
         },
-        (self => self.send(SearchCmd(state.text, true, false))),
+        (self => self.send(SearchCmd(state.text, NewSearch))),
       );
     | ClearFacetCmd(facetKey) =>
       let filters =
@@ -258,7 +272,7 @@ let make = _children => {
       let facets = setFacet(state.facets, facetKey, Finna.None);
       ReasonReact.UpdateWithSideEffects(
         {...state, facets, filters},
-        (self => self.send(SearchCmd(state.text, true, false))),
+        (self => self.send(SearchCmd(state.text, NewSearch))),
       );
     | RecordCmd(id) =>
       ReasonReact.UpdateWithSideEffects(
@@ -292,9 +306,24 @@ let make = _children => {
     <Ui.Fragment>
       <SearchField
         openUrl
+        onSearch={text => self.send(OnSearch(text))}
         lookfor={self.state.text}
-        onSearch={text => self.send(SearchCmd(text, true, false))}
       />
+      <div className=Style.facets>
+        <Facets
+          facets={self.state.facets}
+          filters={self.state.filters}
+          onGetFacets={
+            (facetKey, onLoaded) =>
+              self.send(GetFacetsCmd(facetKey, onLoaded))
+          }
+          onSelectFacet={
+            (facetKey, facetValue, label) =>
+              self.send(FacetResultsCmd(facetKey, facetValue, label))
+          }
+          onClearFacet={filter => self.send(ClearFacetCmd(filter))}
+        />
+      </div>
       {
         switch (self.state.route) {
         | Search =>
@@ -346,9 +375,11 @@ let make = _children => {
     </Ui.Fragment>,
   didMount: self => {
     let watcherID =
-      ReasonReact.Router.watchUrl(url => urlChange(self.send, url));
+      ReasonReact.Router.watchUrl(url =>
+        urlChange(self.send, self.state, url)
+      );
     let url = ReasonReact.Router.dangerouslyGetInitialUrl();
-    urlChange(self.send, url);
+    urlChange(self.send, self.state, url);
     self.onUnmount(() => ReasonReact.Router.unwatchUrl(watcherID));
     /* focus search field on keypress */
     /*   Webapi.Dom.Element.addKeyDownEventListener( */

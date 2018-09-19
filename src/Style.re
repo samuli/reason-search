@@ -40,7 +40,8 @@ let init = () => {
   );
 };
 
-let loader = style([padding(basePadding)]);
+let loader =
+  style([padding(basePadding), margin2(~h=px(0), ~v=basePadding)]);
 let nextPage =
   style([
     textAlign(`center),

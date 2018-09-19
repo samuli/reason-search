@@ -73,28 +73,16 @@ module Results = {
           | LoadingStatus
           | LoadingMoreStatus =>
             <Fragment>
-              <div className=Style.facets>
-                <Facets
-                  facets
-                  filters
-                  onGetFacets=(
-                    (facetKey, onLoaded) =>
-                      dispatch(GetFacetsCmd(facetKey, onLoaded))
-                  )
-                  onSelectFacet=(
-                    (facetKey, facetValue, label) =>
-                      dispatch(FacetResultsCmd(facetKey, facetValue, label))
-                  )
-                  onClearFacet=(filter => dispatch(ClearFacetCmd(filter)))
-                />
-              </div>
               <div className=Style.container>
                 {
-                  searchStatus == ResultsStatus ?
+                  switch (searchStatus) {
+                  | ResultsStatus
+                  | LoadingMoreStatus =>
                     <p className=Style.searchResultsInfo>
                       {str("Results: " ++ string_of_int(resultCnt))}
-                    </p> :
-                    ReasonReact.null
+                    </p>
+                  | _ => ReasonReact.null
+                  }
                 }
                 <ul className=Style.searchResults>
                   {
