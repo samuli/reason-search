@@ -1,5 +1,5 @@
 type action =
-  | SearchCmd(string, bool)
+  | SearchCmd(string, bool, bool)
   | ResultsCmd(Finna.searchResponse)
   | ToggleImagesCmd
   | NextPageCmd

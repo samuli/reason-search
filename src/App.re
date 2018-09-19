@@ -57,7 +57,7 @@ let urlChange = (send, url: ReasonReact.Router.url) => {
       switch (Js.String.split("=", params)) {
       | [|"lookfor", ""|] => ()
       | [|"lookfor", lookfor|] =>
-        send(SearchCmd(Js_global.decodeURIComponent(lookfor), true))
+        send(SearchCmd(Js_global.decodeURIComponent(lookfor), true, false))
       | _ => send(CloseRecordCmd)
       }
     | _ => ()
@@ -125,28 +125,36 @@ let make = _children => {
   },
   reducer: (action: action, state: state) =>
     switch (action) {
-    | SearchCmd(text, newSearch) =>
-      ReasonReact.UpdateWithSideEffects(
-        {
+    | SearchCmd(text, newSearch, searchMore) =>
+      if (searchMore || text != state.text) {
+        ReasonReact.UpdateWithSideEffects(
+          {
+            ...state,
+            text,
+            page: newSearch ? 1 : state.page,
+            records: newSearch ? [||] : state.records,
+            searchStatus: newSearch ? LoadingStatus : LoadingMoreStatus,
+            route: Search,
+          },
+          (
+            self =>
+              Finna.search(
+                ~lookfor=text,
+                ~filters=getActiveFilters(state.facets),
+                ~page=self.state.page,
+                ~limit=self.state.limit,
+                ~onResults=results => self.send(ResultsCmd(results)),
+                (),
+              )
+          ),
+        );
+      } else {
+        ReasonReact.Update({
           ...state,
-          text,
-          page: newSearch ? 1 : state.page,
-          records: newSearch ? [||] : state.records,
-          searchStatus: newSearch ? LoadingStatus : LoadingMoreStatus,
           route: Search,
-        },
-        (
-          self =>
-            Finna.search(
-              ~lookfor=text,
-              ~filters=getActiveFilters(state.facets),
-              ~page=self.state.page,
-              ~limit=self.state.limit,
-              ~onResults=results => self.send(ResultsCmd(results)),
-              (),
-            )
-        ),
-      )
+          searchStatus: ResultsStatus,
+        });
+      }
     | ResultsCmd((response: Finna.searchResponse)) =>
       response.error ?
         ReasonReact.Update({...state, searchStatus: NoResultsStatus}) :
@@ -187,7 +195,7 @@ let make = _children => {
       Js.log("next");
       ReasonReact.UpdateWithSideEffects(
         {...state, page: state.page + 1},
-        (self => self.send(SearchCmd(state.text, false))),
+        (self => self.send(SearchCmd(state.text, false, true))),
       );
     | GetFacetsCmd(facetKey, onLoaded) =>
       ReasonReact.UpdateWithSideEffects(
@@ -238,7 +246,7 @@ let make = _children => {
           facets: setFacet(state.facets, facetKey, Finna.Value(value)),
           filters,
         },
-        (self => self.send(SearchCmd(state.text, true))),
+        (self => self.send(SearchCmd(state.text, true, false))),
       );
     | ClearFacetCmd(facetKey) =>
       let filters =
@@ -250,7 +258,7 @@ let make = _children => {
       let facets = setFacet(state.facets, facetKey, Finna.None);
       ReasonReact.UpdateWithSideEffects(
         {...state, facets, filters},
-        (self => self.send(SearchCmd(state.text, true))),
+        (self => self.send(SearchCmd(state.text, true, false))),
       );
     | RecordCmd(id) =>
       ReasonReact.UpdateWithSideEffects(
@@ -285,7 +293,7 @@ let make = _children => {
       <SearchField
         openUrl
         lookfor={self.state.text}
-        onSearch={text => self.send(SearchCmd(text, true))}
+        onSearch={text => self.send(SearchCmd(text, true, false))}
       />
       {
         switch (self.state.route) {
