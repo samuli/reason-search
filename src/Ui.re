@@ -1,6 +1,17 @@
 open Util;
 open Types;
 
+/* reference: https://reactjs.org/docs/fragments.html */
+module Fragment = {
+  [@bs.module "react"] external fragment: ReasonReact.reactClass = "Fragment";
+  let make = children =>
+    ReasonReact.wrapJsForReason(
+      ~reactClass=fragment,
+      ~props=Js.Obj.empty(),
+      children,
+    );
+};
+
 module Error = {
   let component = ReasonReact.statelessComponent("Error");
 
@@ -61,7 +72,7 @@ module Results = {
           | ResultsStatus
           | LoadingStatus
           | LoadingMoreStatus =>
-            <div>
+            <Fragment>
               <div className=Style.facets>
                 <Facets
                   facets
@@ -126,7 +137,7 @@ module Results = {
                     />
                 }
               </div>
-            </div>
+            </Fragment>
           | NoResultsStatus =>
             <div className=Style.pad> {str("No results")} </div>
           | _ => ReasonReact.null

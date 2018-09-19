@@ -1,3 +1,9 @@
+type searchActionType =
+  | New
+  | MoreResults
+  | FacetResults
+  | BackToResults;
+
 type action =
   | SearchCmd(string, bool, bool)
   | ResultsCmd(Finna.searchResponse)

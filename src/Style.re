@@ -53,7 +53,12 @@ let nextPage =
     hover([backgroundColor(hex("cacdd0"))]),
   ]);
 
-let searchBox = style([backgroundColor(greyLight), padding(basePadding)]);
+let searchBox =
+  style([
+    backgroundColor(greyLight),
+    padding(basePadding),
+    borderRadius(px(4)),
+  ]);
 
 let facets =
   style([

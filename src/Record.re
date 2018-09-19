@@ -75,15 +75,8 @@ let make =
       <li
         onClick
         key={record.id}
-        className={
-          Style.recordList(~visited=isVisited)
-          ++ " record py-1 border-b border-solid border-grey hover:bg-grey-light cursor-pointer"
-        }>
-        <a
-          className="link font-hairline no-underline cursor-pointer"
-          target="_finna">
-          <h2 className="font-normal text-base"> {str(record.title)} </h2>
-        </a>
+        className={Style.recordList(~visited=isVisited)}>
+        <a target="_finna"> <h2> {str(record.title)} </h2> </a>
         <p>
           authors
           {facetLink("format", record.formats)}
@@ -99,7 +92,7 @@ let make =
     | Full =>
       <div className=Style.recordFull>
         <h1> {str(record.title)} </h1>
-        <div className="my-2">
+        <div>
           authors
           {
             switch (record.buildings) {
@@ -113,12 +106,7 @@ let make =
             ReasonReact.array(
               Array.map(
                 img =>
-                  <div>
-                    <img
-                      className={Style.recordImage ++ " record-image"}
-                      href=img
-                    />
-                  </div>,
+                  <div> <img className=Style.recordImage href=img /> </div>,
                 imgs,
               ),
             )

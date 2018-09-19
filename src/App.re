@@ -126,7 +126,7 @@ let make = _children => {
   reducer: (action: action, state: state) =>
     switch (action) {
     | SearchCmd(text, newSearch, searchMore) =>
-      if (searchMore || text != state.text) {
+      if (newSearch || searchMore || text != state.text) {
         ReasonReact.UpdateWithSideEffects(
           {
             ...state,
@@ -289,7 +289,7 @@ let make = _children => {
     },
   didUpdate: ({oldSelf: _self, newSelf: _newSelf}) => registerInview(),
   render: self =>
-    <div>
+    <Ui.Fragment>
       <SearchField
         openUrl
         lookfor={self.state.text}
@@ -343,7 +343,7 @@ let make = _children => {
           }
         }
       }
-    </div>,
+    </Ui.Fragment>,
   didMount: self => {
     let watcherID =
       ReasonReact.Router.watchUrl(url => urlChange(self.send, url));

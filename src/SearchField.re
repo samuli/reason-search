@@ -17,12 +17,11 @@ let make = (~lookfor, ~openUrl, ~onSearch, _children) => {
       ReasonReact.NoUpdate;
     },
   render: self =>
-    <div className={Style.searchBox ++ " bg-grey-lighter p-5"}>
+    <div className=Style.searchBox>
       <input
         type_="search"
         id="search"
         placeholder="Search..."
-        className="search edit border border-gray border-solid p-2 w-full"
         value={self.state.text}
         onChange={
           ev => self.send(Change(ReactEvent.Form.target(ev)##value))
@@ -32,7 +31,6 @@ let make = (~lookfor, ~openUrl, ~onSearch, _children) => {
             if (ReactEvent.Keyboard.keyCode(ev) === 13) {
               ReactEvent.Keyboard.preventDefault(ev);
               openUrl("/Search/lookfor=" ++ self.state.text);
-              /* self.send(Search); */
             }
         }
         autoFocus=true
