@@ -59,9 +59,9 @@ let urlChange = (send, url: ReasonReact.Router.url) => {
       | [|"lookfor", ""|] => ()
       | [|"lookfor", lookfor|] =>
         send(SearchCmd(Js_global.decodeURIComponent(lookfor), true))
-      | [||] => send(CloseRecordCmd)
+      | _ => send(CloseRecordCmd)
       }
-    | [|""|] => Js.log("main")
+    | _ => ()
     };
     ();
   };
