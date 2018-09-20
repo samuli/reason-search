@@ -7,7 +7,7 @@ type selectOption = {
 [@bs.deriving abstract]
 type jsProps = {
   options: array(selectOption),
-  onFocus: (string, string) => unit,
+  onMenuOpen: (string, string) => unit,
   onChange: (selectOption, string) => unit,
   onMenuClose: unit => unit,
   loadingMessage: string => string,
@@ -23,7 +23,7 @@ let make =
     (
       ~options,
       ~selected,
-      ~onFocus,
+      ~onMenuOpen,
       ~onChange,
       ~onMenuClose,
       ~isLoading,
@@ -37,7 +37,7 @@ let make =
       jsProps(
         ~options,
         ~selected,
-        ~onFocus,
+        ~onMenuOpen,
         ~onChange,
         ~onMenuClose,
         ~loadingMessage,

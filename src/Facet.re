@@ -161,7 +161,7 @@ let make =
           <ReactSelect
             options
             selected
-            onFocus=((_a, _b) => self.send(Focus))
+            onMenuOpen=((_a, _b) => self.send(Focus))
             onChange=((obj, action) => self.send(FacetClick(obj, action)))
             onMenuClose=(() => self.send(MenuClose))
             isLoading={self.state.mode == Loading}

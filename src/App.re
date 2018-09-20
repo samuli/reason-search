@@ -29,6 +29,7 @@ type route =
   | Record(string);
 
 type state = {
+  lng: string,
   searchStatus: searchState,
   text: string,
   result: option(Finna.searchResponse),
@@ -110,6 +111,7 @@ let component = ReasonReact.reducerComponent("App");
 let make = _children => {
   ...component,
   initialState: () => {
+    lng: "en-gb",
     searchStatus: NotLoadedStatus,
     text: "",
     page: 1,
@@ -127,9 +129,11 @@ let make = _children => {
   reducer: (action: action, state: state) =>
     switch (action) {
     | OnSearch(text) =>
-      openUrl("/Search/lookfor=" ++ text);
-      ReasonReact.Update({...state, text: ""});
-    /* (self => self.send(SearchCmd(text, NewSearch))), */
+      /* openUrl("/Search/lookfor=" ++ text); */
+      ReasonReact.UpdateWithSideEffects(
+        {...state, text: "", searchStatus: LoadingStatus},
+        (_self => openUrl("/Search/lookfor=" ++ text)),
+      )
     | SearchCmd(text, searchType) =>
       switch (searchType) {
       | BackToResults
@@ -164,15 +168,18 @@ let make = _children => {
                 ~filters=getActiveFilters(state.facets),
                 ~page=self.state.page,
                 ~limit=self.state.limit,
+                ~lng=state.lng,
                 ~onResults=results => self.send(ResultsCmd(results)),
                 (),
               )
+              |> ignore
           ),
         );
       }
     | ResultsCmd((response: Finna.searchResponse)) =>
+      Js.log("results");
       response.error ?
-        ReasonReact.Update({...state, searchStatus: NoResultsStatus}) :
+        ReasonReact.Update({...state, searchStatus: ErrorStatus}) :
         {
           let newFacets = Finna.getInitialFacets();
           switch (response.results) {
@@ -203,7 +210,7 @@ let make = _children => {
               searchStatus: resultCount > 0 ? ResultsStatus : NoResultsStatus,
             });
           };
-        }
+        };
     | ToggleImagesCmd =>
       ReasonReact.Update({...state, showImages: !state.showImages})
     | NextPageCmd =>
@@ -221,9 +228,11 @@ let make = _children => {
               ~filters=getActiveFilters(state.facets),
               ~page=self.state.page,
               ~facetKey,
+              ~lng=self.state.lng,
               ~onResults=results =>
               self.send(ReceiveFacetsCmd(facetKey, results, onLoaded))
             )
+            |> ignore
         ),
       )
     | ReceiveFacetsCmd(facetKey, (response: Finna.searchResponse), onLoaded) =>
@@ -282,8 +291,10 @@ let make = _children => {
             Finna.record(
               ~id,
               ~onResults=result => self.send(RecordResultCmd(result)),
+              ~lng=state.lng,
               (),
             )
+            |> ignore
         ),
       )
     | RecordResultCmd((result: Finna.recordResponse)) =>

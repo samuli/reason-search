@@ -227,7 +227,8 @@ let recordResult = (json: Js.Json.t): recordResult =>
   };
 
 /* API calls */
-let search = (~lookfor, ~filters, ~page, ~limit, ~onResults, ~facetKey=?, ()) => {
+let search =
+    (~lookfor, ~filters, ~page, ~limit, ~onResults, ~facetKey=?, ~lng, ()) => {
   let filterStr =
     filters
     |> Array.map((f: filter) => {
@@ -237,7 +238,6 @@ let search = (~lookfor, ~filters, ~page, ~limit, ~onResults, ~facetKey=?, ()) =>
        })
     |> Js.Array.joinWith("&");
 
-  let lng = "en-gb";
   let sort = "relevance";
 
   let facetStr =
@@ -260,12 +260,11 @@ let search = (~lookfor, ~filters, ~page, ~limit, ~onResults, ~facetKey=?, ()) =>
          |> onResults
          |> resolve
        )
-    |> ignore
+    |> catch(_err => resolve(onResults({error: true, results: None})))
   );
 };
 
-let record = (~id, ~onResults, ()) => {
-  let lng = "fi";
+let record = (~id, ~onResults, ~lng, ()) => {
   let id = Js_global.encodeURIComponent(id);
   let url = {j|$apiUrl/api/v1/record?id=$id&field[]=id&field[]=formats&field[]=title&field[]=buildings&field[]=images&field[]=authors&field[]=year&prettyPrint=false&lng=$lng|j};
 
@@ -281,11 +280,11 @@ let record = (~id, ~onResults, ()) => {
          |> onResults
          |> resolve
        )
-    |> ignore
+    |> catch(_err => resolve(onResults({error: true, record: None})))
   );
 };
 
-let getFacets = (~lookfor, ~filters, ~page, ~facetKey, ~onResults) => {
+let getFacets = (~lookfor, ~filters, ~page, ~facetKey, ~onResults, ~lng) => {
   let filtersWithoutFacet =
     List.filter(f => f.key != facetKey, Array.to_list(filters))
     |> Array.of_list;
@@ -295,6 +294,7 @@ let getFacets = (~lookfor, ~filters, ~page, ~facetKey, ~onResults) => {
     ~page,
     ~limit=0,
     ~onResults,
+    ~lng,
     ~facetKey,
     (),
   );

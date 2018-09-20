@@ -93,7 +93,6 @@ module Results = {
                             details=Record.List
                             record=r
                             onClick={_e => self.send(OpenRecord(r.id))}
-                            /* onClick={_e => openUrl("/Record/" ++ r.id)} */
                             onSelectFacet={
                               (facetKey, facetValue, label) =>
                                 dispatch(
@@ -128,6 +127,8 @@ module Results = {
             </Fragment>
           | NoResultsStatus =>
             <div className=Style.pad> {str("No results")} </div>
+          | ErrorStatus =>
+            <div className=Style.error> {str("Error loading results")} </div>
           | _ => ReasonReact.null
           }
         }

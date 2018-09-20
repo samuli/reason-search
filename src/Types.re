@@ -23,4 +23,5 @@ type searchState =
   | LoadingStatus
   | LoadingMoreStatus
   | NoResultsStatus
-  | ResultsStatus;
+  | ResultsStatus
+  | ErrorStatus;
