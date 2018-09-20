@@ -15,7 +15,7 @@ type state = {
   facet: Finna.facet,
 };
 type action =
-  | FacetClick(ReactSelect.selectOption, string)
+  | FacetClick(string)
   | BooleanFacetClick(bool)
   | Focus
   | FacetsLoaded(Finna.facet)
@@ -62,15 +62,10 @@ let make =
       | Loaded => ReasonReact.Update({...state, mode: Open})
       | _ => ReasonReact.NoUpdate
       }
-    | FacetClick((obj: ReactSelect.selectOption), _action) =>
-      switch (ReactSelect.valueGet(obj)) {
+    | FacetClick(value) =>
+      switch (value) {
       | "*" => onClearFacet(facet.key)
-      | _ =>
-        onSelectFacet(
-          facet.key,
-          ReactSelect.valueGet(obj),
-          ReactSelect.labelGet(obj),
-        )
+      | _ => onSelectFacet(facet.key, value, "label")
       };
       ReasonReact.Update({...state, mode: Closed});
     | BooleanFacetClick(selected) =>
@@ -92,84 +87,53 @@ let make =
   render: self =>
     switch (facet.facetType) {
     | Normal =>
-      let all: Finna.facetItem = {value: "*", label: title, count: 0};
-      let options =
-        List.mapi(
-          (ind, facet: Finna.facetItem) => {
-            let label = facet.label;
-            let label =
-              ind > 0 ?
-                label ++ " (" ++ string_of_int(facet.count) ++ ")" : label;
-
-            let value = facet.value;
-            ReactSelect.selectOption(~label, ~value);
-          },
-          [all, ...Array.to_list(self.state.facet.items)],
-        )
-        |> Array.of_list;
-
-      let (selected, first) =
-        switch (facet.value) {
-        | Value(value) =>
-          Array.length(options) == 1 ?
-            switch (
-              List.find(
-                (f: Finna.filter) => f.key == facet.key,
-                Array.to_list(filters),
-              )
-            ) {
-            | exception Not_found => (options[0], true)
-            | f =>
-              let label =
-                switch (f.label) {
-                | Some(l) => l
-                | None => ""
-                };
-              (ReactSelect.selectOption(~label, ~value=f.value), true);
-            } :
-            (
-              switch (
-                List.find(
-                  (opt: ReactSelect.selectOption) =>
-                    ReactSelect.valueGet(opt) == value,
-                  Array.to_list(options),
-                )
-              ) {
-              | exception Not_found => (options[0], true)
-              | f => (f, false)
-              }
-            )
-        | None => (options[0], true)
-        };
-      <div
-        className={
-          Style.facetMenu ++ " mb-2 sm:w-1/2" ++ (ind == 0 ? " sm:mr-2" : "")
-        }>
+      <div className=Style.facetMenu>
         {
-          let label = ReactSelect.labelGet(selected);
-          let label =
-            first ?
-              label :
-              Js.String.substring(
-                ~from=0,
-                ~to_=Js.String.indexOf("(", label) - 1,
-                label,
-              );
+          ReasonReact.array([|
+            <input
+              list={facet.key}
+              name={facet.key}
+              onKeyUp={e => Js.log("key")}
+              onFocus={e => self.send(Focus)}
+              placeholder={facet.key}
+              onChange={
+                e => {
+                  Js.log("change");
+                  Js.log(ReactEvent.Form.target(e)##value);
+                  self.send(FacetClick(ReactEvent.Form.target(e)##value));
+                }
+              }
+            />,
+            <datalist id={facet.key}>
+              {
+                let all: Finna.facetItem = {
+                  value: "*",
+                  label: title,
+                  count: 0,
+                };
 
-          let value = ReactSelect.valueGet(selected);
-          let selected = ReactSelect.selectOption(~label, ~value);
-          <ReactSelect
-            options
-            selected
-            onMenuOpen=((_a, _b) => self.send(Focus))
-            onChange=((obj, action) => self.send(FacetClick(obj, action)))
-            onMenuClose=(() => self.send(MenuClose))
-            isLoading={self.state.mode == Loading}
-            loadingMessage=(_s => "Loading...")
-            placeholder={facet.key}
-          />;
+                ReasonReact.array(
+                  List.map(
+                    (f: Finna.facetItem) => <option value={f.value} />,
+                    [all, ...Array.to_list(self.state.facet.items)],
+                  )
+                  |> Array.of_list,
+                );
+              }
+            </datalist>,
+            /* <ReactSelect */
+            /*   options */
+            /*   selected */
+            /*   onMenuOpen=((_a, _b) => self.send(Focus)) */
+            /*   onChange=((obj, action) => self.send(FacetClick(obj, action))) */
+            /*   onMenuClose=(() => self.send(MenuClose)) */
+            /*   isLoading={self.state.mode == Loading} */
+            /*   loadingMessage=(_s => "Loading...") */
+            /*   placeholder={facet.key} */
+            /* />; */
+          |])
         }
-      </div>;
+      </div>
     | Boolean =>
       <div>
         {
