@@ -5,7 +5,7 @@ type action =
 
 let component = ReasonReact.reducerComponent("SearchField");
 
-let make = (~lookfor, ~openUrl, ~onSearch, _children) => {
+let make = (~lookfor, ~onSearch, _children) => {
   ...component,
   initialState: () => {text: lookfor},
   reducer: (action: action, _state: state) =>
@@ -27,8 +27,6 @@ let make = (~lookfor, ~openUrl, ~onSearch, _children) => {
             if (ReactEvent.Keyboard.keyCode(ev) === 13) {
               ReactEvent.Keyboard.preventDefault(ev);
               onSearch(self.state.text);
-              /* self.send(Change(ReactEvent.Form.target(ev)##value)) */
-              /* openUrl("/Search/lookfor=" ++ self.state.text); */
             }
         }
         autoFocus=true

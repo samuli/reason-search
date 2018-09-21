@@ -315,74 +315,77 @@ let make = _children => {
   didUpdate: ({oldSelf: _self, newSelf: _newSelf}) => registerInview(),
   render: self =>
     <Ui.Fragment>
-      <SearchField
-        openUrl
-        onSearch={text => self.send(OnSearch(text))}
-        lookfor={self.state.text}
-      />
-      <div className=Style.facets>
-        <Facets
-          facets={self.state.facets}
-          filters={self.state.filters}
-          onGetFacets={
-            (facetKey, onLoaded) =>
-              self.send(GetFacetsCmd(facetKey, onLoaded))
-          }
-          onSelectFacet={
-            (facetKey, facetValue, label) =>
-              self.send(FacetResultsCmd(facetKey, facetValue, label))
-          }
-          onClearFacet={filter => self.send(ClearFacetCmd(filter))}
+      <section role="search">
+        <SearchField
+          onSearch={text => self.send(OnSearch(text))}
+          lookfor={self.state.text}
         />
-      </div>
-      {
-        switch (self.state.route) {
-        | Search =>
-          let resultCnt =
-            switch (self.state.result) {
-            | Some(reponse) =>
-              switch (reponse.results) {
-              | Some(results) => results.resultCount
-              | None => 0
-              }
-            | None => 0
-            };
-
-          <Ui.Results
-            dispatch={self.send}
-            openUrl
-            searchStatus={self.state.searchStatus}
-            showImages={self.state.showImages}
+        <div className=Style.facets>
+          <Facets
             facets={self.state.facets}
             filters={self.state.filters}
-            activeFilters={self.state.filters}
-            resultCnt
-            records={self.state.records}
-            pageCnt={self.state.pageCnt}
-            page={self.state.page}
-          />;
-        | Record(id) =>
-          switch (self.state.recordResult) {
-          | Some(response) =>
-            response.error ?
-              <Ui.Error message={"Failded to load record " ++ id} /> :
-              (
-                switch (self.state.record) {
-                | Some((record: Finna.record)) =>
-                  <Ui.RecordPage
-                    dispatch={self.send}
-                    openUrl
-                    record
-                    searchStatus={self.state.searchStatus}
-                    activeFilters={getActiveFilters(self.state.facets)}
-                  />
-                | None => ReasonReact.null
+            onGetFacets={
+              (facetKey, onLoaded) =>
+                self.send(GetFacetsCmd(facetKey, onLoaded))
+            }
+            onSelectFacet={
+              (facetKey, facetValue, label) =>
+                self.send(FacetResultsCmd(facetKey, facetValue, label))
+            }
+            onClearFacet={filter => self.send(ClearFacetCmd(filter))}
+          />
+        </div>
+      </section>
+      <Ui.Fragment>
+        {
+          switch (self.state.route) {
+          | Search =>
+            let resultCnt =
+              switch (self.state.result) {
+              | Some(reponse) =>
+                switch (reponse.results) {
+                | Some(results) => results.resultCount
+                | None => 0
                 }
-              )
-          | None => ReasonReact.null
+              | None => 0
+              };
+
+            <Ui.Results
+              dispatch={self.send}
+              openUrl
+              searchStatus={self.state.searchStatus}
+              showImages={self.state.showImages}
+              facets={self.state.facets}
+              filters={self.state.filters}
+              activeFilters={self.state.filters}
+              resultCnt
+              records={self.state.records}
+              pageCnt={self.state.pageCnt}
+              page={self.state.page}
+            />;
+          | Record(id) =>
+            switch (self.state.recordResult) {
+            | Some(response) =>
+              response.error ?
+                <Ui.Error message={"Failded to load record " ++ id} /> :
+                (
+                  switch (self.state.record) {
+                  | Some((record: Finna.record)) =>
+                    <Ui.RecordPage
+                      dispatch={self.send}
+                      openUrl
+                      record
+                      searchStatus={self.state.searchStatus}
+                      activeFilters={getActiveFilters(self.state.facets)}
+                    />
+                  | None => ReasonReact.null
+                  }
+                )
+            | None => ReasonReact.null
+            }
           }
         }
-      }
+      </Ui.Fragment>
     </Ui.Fragment>,
   didMount: self => {
     let watcherID =

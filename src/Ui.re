@@ -66,7 +66,7 @@ module Results = {
       | _ => ReasonReact.NoUpdate
       },
     render: self =>
-      <div>
+      <section role="main">
         {
           switch (searchStatus) {
           | ResultsStatus
@@ -132,7 +132,7 @@ module Results = {
           | _ => ReasonReact.null
           }
         }
-      </div>,
+      </section>,
   };
 };
 
@@ -150,7 +150,7 @@ module RecordPage = {
       ) => {
     ...component,
     render: _self =>
-      <div>
+      <section role="main">
         {
           switch (searchStatus) {
           | LoadingStatus => <Loading padding=5 />
@@ -169,7 +169,7 @@ module RecordPage = {
           | _ => ReasonReact.null
           }
         }
-      </div>,
+      </section>,
   };
 };
 
