@@ -14,13 +14,13 @@ let init = () => {
     "h1, h2, h3, p",
     [margin2(~h=px(0), ~v=em(0.2)), lineHeight(em(1.2))],
   );
-
+  global("a", [textDecoration(`none)]);
   global("h1", [fontWeight(400), fontSize(em(1.3))]);
   global("h2", [fontWeight(400), fontSize(em(1.0))]);
   global("p", [fontWeight(300), fontSize(em(0.9))]);
   global(
     "ul, li",
-    [listStyle(none, inside, none), padding(px(0)), margin(px(0))],
+    [padding(px(0)), margin(px(0)), listStyleType(`none)],
   );
   global("img", [maxWidth(pct(100.0)), height(auto)]);
   global(
@@ -99,6 +99,10 @@ let recordList = (~visited) =>
   ]);
 
 let recordFull = style([padding(basePadding)]);
+
+let recordLinks = style([marginLeft(em(1.0)), listStyleType(`circle)]);
+let recordLink = style([listStyleType(`disc)]);
+
 let recordImages = style([marginTop(em(1.0))]);
 let recordImage =
   style([

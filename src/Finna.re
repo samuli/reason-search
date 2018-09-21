@@ -13,6 +13,16 @@ let val2Str = v =>
   };
 
 /* API types */
+type translatedField = {
+  value: string,
+  translated: string,
+};
+
+type onlineUrl = {
+  url: option(string),
+  label: option(string),
+};
+
 type translated = {
   value: string,
   label: string,
@@ -58,6 +68,8 @@ type record = {
   authors: array(string),
   publishers: option(array(string)),
   year: option(string),
+  onlineUrls: option(array(onlineUrl)),
+  urls: option(array(onlineUrl)),
 };
 
 let getInitialFacets = () => {
@@ -128,6 +140,18 @@ let translated = json =>
     label: json |> field("translated", string),
   };
 
+let onlineLink = json =>
+  Json.Decode.{
+    url: json |> optional(field("url", string)),
+    label: json |> optional(field("text", string)),
+  };
+
+let onlineUrl = json =>
+  Json.Decode.{
+    url: json |> optional(field("url", string)),
+    label: json |> optional(field("desc", string)),
+  };
+
 let decodeFacetLabel =
   Json.Decode.(
     either(string |> map(s => String(s)), int |> map(i => Int(i)))
@@ -154,6 +178,8 @@ let record = json =>
       ],
     publishers: json |> optional(field("publishers", array(string))),
     year: json |> optional(field("year", string)),
+    onlineUrls: json |> optional(field("onlineUrls", array(onlineLink))),
+    urls: json |> optional(field("urls", array(onlineUrl))),
   };
 
 let result = (json: Js.Json.t): result =>
@@ -203,7 +229,7 @@ let processResults = (results: result): searchResponse =>
         },
     };
     {error: false, results: Some(res)};
-  | "ERROR" => {error: true, results: None}
+  | _ => {error: true, results: None}
   };
 
 /* Record decoders */
@@ -266,7 +292,7 @@ let search =
 
 let record = (~id, ~onResults, ~lng, ()) => {
   let id = Js_global.encodeURIComponent(id);
-  let url = {j|$apiUrl/api/v1/record?id=$id&field[]=id&field[]=formats&field[]=title&field[]=buildings&field[]=images&field[]=authors&field[]=year&prettyPrint=false&lng=$lng|j};
+  let url = {j|$apiUrl/api/v1/record?id=$id&field[]=id&field[]=formats&field[]=title&field[]=buildings&field[]=images&field[]=authors&field[]=year&field[]=onlineUrls&field[]=urls&prettyPrint=false&lng=$lng|j};
 
   Js.log(url);
   Js.Promise.(

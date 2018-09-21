@@ -117,6 +117,37 @@ let make =
             )
           }
         </div>
+        <ul className=Style.recordLinks>
+          {
+            let formatUrls = urls =>
+              switch (urls) {
+              | Some(links) =>
+                ReasonReact.array(
+                  Array.map(
+                    (link: Finna.onlineUrl) => {
+                      let (label, url) =
+                        switch (link.url, link.label) {
+                        | (Some(url), Some(text)) => (text, url)
+                        | (Some(url), None) => (url, url)
+                        | (None, Some(text)) => (text, text)
+                        | _ => ("", "")
+                        };
+                      <li className=Style.recordLink>
+                        <a href=url> {str(label)} </a>
+                      </li>;
+                    },
+                    links,
+                  ),
+                )
+              | None => ReasonReact.null
+              };
+
+            ReasonReact.array([|
+              formatUrls(record.onlineUrls),
+              formatUrls(record.urls),
+            |]);
+          }
+        </ul>
         <p>
           <a href={Finna.recordBaseUrl ++ record.id}> {str("Finna")} </a>
         </p>
