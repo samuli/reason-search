@@ -327,9 +327,10 @@ let getFacets = (~lookfor, ~filters, ~page, ~facetKey, ~onResults, ~lng) => {
 };
 
 /* Utilities */
-let getFormat = (record: record): option(string) =>
+let getFormat = (record: record): option(translated) =>
   switch (record.formats) {
   | Some(formats) =>
-    Array.length(formats) > 0 ? Some(formats[0].value) : None
+    let len = Array.length(formats);
+    len > 0 ? Some(formats[len - 1]) : None;
   | _ => None
   };

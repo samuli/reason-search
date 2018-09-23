@@ -30,7 +30,7 @@ let make =
       | [||] => ReasonReact.null
       | authors =>
         <span className=Style.recordAuthors>
-          {str(Js.Array.joinWith(", ", authors))}
+          {str(Js.Array.joinWith(", ", authors) ++ ":")}
         </span>
       };
 
@@ -72,34 +72,34 @@ let make =
 
     switch (details) {
     | List =>
+      let format = Finna.getFormat(record);
       <li
         key={record.id}
-        className={
-          Style.recordList(
-            ~visited=isVisited,
-            ~format=Finna.getFormat(record),
-          )
-        }>
+        className={Style.recordList(~visited=isVisited, ~format)}>
         <div className=Style.recordListBkg onClick>
+          <p> authors </p>
           <a target="_finna"> <h2> {str(record.title)} </h2> </a>
           <p>
-            <FormatIcon format={Finna.getFormat(record)} />
-            publishers
-            year
-          </p>
-          <p> authors </p>
-        </div>
-        <div className=Style.recordListFacetLinks>
-          /* {facetLink("format", record.formats)} */
-
+            {
+              switch (format) {
+              | Some(format) =>
+                <span className=Style.recordFormat>
+                  {str(format.label)}
+                </span>
+              | None => ReasonReact.null
+              }
+            }
+            <span className=Style.recordPublished> publishers year </span>
             {
               switch (record.buildings) {
               | Some(buildings) => facetLink("building", buildings)
               | None => ReasonReact.null
               }
             }
-          </div>
-      </li>
+          </p>
+        </div>
+        <div />
+      </li>;
     | Full =>
       <div className=Style.recordFull>
         <h1> {str(record.title)} </h1>

@@ -19,7 +19,7 @@ let init = () => {
   );
   global("a", [textDecoration(`none)]);
   global("h1", [fontWeight(400), fontSize(em(1.3))]);
-  global("h2", [fontWeight(400), fontSize(em(1.0))]);
+  global("h2", [fontWeight(600), fontSize(em(1.0))]);
   global("p", [fontWeight(300), fontSize(em(0.9))]);
   global(
     "ul, li",
@@ -77,11 +77,11 @@ let facetLink = active =>
     display(`inlineBlock),
     fontSize(em(0.9)),
     padding2(~v=em(0.1), ~h=em(0.5)),
-    marginRight(em(0.3)),
+    /* marginRight(em(0.3)), */
     backgroundColor(greyLight),
-    borderRadius(rem(0.4)),
-    cursor(`pointer),
-    hover(active ? [backgroundColor(hex("cacdd0"))] : []),
+    /* borderRadius(rem(0.4)), */
+    /* cursor(`pointer), */
+    /* hover(active ? [backgroundColor(hex("cacdd0"))] : []), */
   ]);
 
 let searchResults = style([]);
@@ -92,10 +92,10 @@ let pad = style([padding(basePadding)]);
 let padRight = p => style([paddingRight(em(p))]);
 let error = style([padding(basePadding), color(red)]);
 
-let formatColor = (~format) =>
+let formatColor = (~format: option(Finna.translated)) =>
   switch (format) {
   | Some(format) =>
-    switch (format) {
+    switch (format.value) {
     | "0/Book/" => hex("ff0000")
     | "0/Sound/" => hex("00ff00")
     | "0/Image/" => hex("00f000")
@@ -108,7 +108,7 @@ let recordList = (~visited, ~format) =>
   style([
     borderBottom(px(1), solid, greyLight),
     backgroundColor(visited ? hex("eff8ff") : white),
-    borderLeft(em(0.5), `solid, formatColor(~format)),
+    borderRight(em(0.3), `solid, visited ? blue : white),
   ]);
 
 let recordListBkg =
@@ -118,10 +118,18 @@ let recordListBkg =
     cursor(`pointer),
   ]);
 
+let recordFormat =
+  style([
+    display(`inlineBlock),
+    fontSize(em(0.9)),
+    padding2(~v=em(0.1), ~h=em(0.5)),
+    /* marginRight(em(0.3)), */
+    backgroundColor(yellow),
+    marginRight(em(0.5)),
+  ]);
 let recordIcon = style([marginRight(em(0.5))]);
 
-let recordListFacetLinks =
-  style([textAlign(`right), marginBottom(em(0.5))]);
+let recordListFacetLinks = style([marginBottom(em(0.5))]);
 
 let recordFull = style([padding(basePadding)]);
 
@@ -135,6 +143,7 @@ let recordImage =
     minHeight(px(100)),
     backgroundColor(greyLight),
   ]);
-let recordAuthors = style([fontWeight(600), marginRight(em(0.5))]);
+let recordAuthors = style([fontWeight(400), marginRight(em(0.5))]);
 let recrodPublisher = style([marginRight(em(0.3)), fontSize(em(0.9))]);
 let recordYear = style([fontSize(em(0.9))]);
+let recordPublished = style([marginRight(em(0.5))]);

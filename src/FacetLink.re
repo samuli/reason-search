@@ -5,7 +5,7 @@ let component = ReasonReact.statelessComponent("FacetLink");
 let make = (~label, ~facetKey, ~value, ~onSelect, ~isActive, _children) => {
   ...component,
   render: _self =>
-    <div
+    <span
       onClick={
         ev =>
           isActive ?
@@ -17,5 +17,5 @@ let make = (~label, ~facetKey, ~value, ~onSelect, ~isActive, _children) => {
       }
       className={Style.facetLink(isActive)}>
       {str(label)}
-    </div>,
+    </span>,
 };

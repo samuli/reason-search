@@ -111,7 +111,7 @@ let component = ReasonReact.reducerComponent("App");
 let make = _children => {
   ...component,
   initialState: () => {
-    lng: "en-gb",
+    lng: "fi",
     searchStatus: NotLoadedStatus,
     text: "",
     page: 1,
