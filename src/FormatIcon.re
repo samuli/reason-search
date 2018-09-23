@@ -1,23 +1,34 @@
 let component = ReasonReact.statelessComponent("FormatIcon");
 
-let make = (~record: Finna.record, _children) => {
+let make = (~format, _children) => {
   ...component,
-  render: _self => {
-    let formatIconClass =
+  render: _self =>
+    switch (format) {
+    | Some(format) =>
       Js.Re.fromString("^[0-9]\/([a-zA-Z]*)\/$")
-      |> Js.Re.exec(record.formats[0].value)
+      |> Js.Re.exec(format)
       |> (
         fun
-        | Some(result) => Js.Nullable.toOption(Js.Re.captures(result)[1])
-        | None => None
-      );
+        | Some(result) => {
+            let format = Js.Nullable.toOption(Js.Re.captures(result)[1]);
+            switch (format) {
+            | Some(format) =>
+              let icon =
+                switch (Js.String.toLowerCase(format)) {
+                | "book" => "book"
+                | "sound" => "volume-up"
+                | "image" => "image"
+                | "workofart" => "palette"
+                | "place" => "map-marker-alt"
+                | _ => "other"
+                };
+              <i className={Style.recordIcon ++ " fa fa-" ++ icon} />;
+            | _ => ReasonReact.null
+            };
+          }
 
-    let formatIcon =
-      switch (formatIconClass) {
-      | Some(format) => <i className={"fa icon " ++ format} />
-      | None => ReasonReact.null
-      };
-
-    formatIcon;
-  },
+        | _ => ReasonReact.null
+      )
+    | _ => ReasonReact.null
+    },
 };

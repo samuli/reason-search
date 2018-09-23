@@ -62,7 +62,7 @@ type author = {
 type record = {
   id: string,
   title: string,
-  formats: array(translated),
+  formats: option(array(translated)),
   buildings: option(array(translated)),
   images: array(string),
   authors: array(string),
@@ -168,7 +168,7 @@ let record = json =>
   Json.Decode.{
     id: json |> field("id", string),
     title: json |> field("title", string),
-    formats: json |> field("formats", array(translated)),
+    formats: json |> optional(field("formats", array(translated))),
     buildings: json |> optional(field("buildings", array(translated))),
     images: json |> field("images", array(string)),
     authors:
@@ -325,3 +325,11 @@ let getFacets = (~lookfor, ~filters, ~page, ~facetKey, ~onResults, ~lng) => {
     (),
   );
 };
+
+/* Utilities */
+let getFormat = (record: record): option(string) =>
+  switch (record.formats) {
+  | Some(formats) =>
+    Array.length(formats) > 0 ? Some(formats[0].value) : None
+  | _ => None
+  };

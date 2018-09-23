@@ -15,6 +15,7 @@ type jsProps = {
   placeholder: string,
   [@bs.as "value"]
   selected: selectOption,
+  isSearchable: bool,
 };
 
 [@bs.module "react-select"]
@@ -43,6 +44,7 @@ let make =
         ~loadingMessage,
         ~isLoading,
         ~placeholder,
+        ~isSearchable=false,
       ),
     children,
   );

@@ -26,15 +26,31 @@ let make = (~lookfor, ~onSearch, _children) => {
           ev =>
             if (ReactEvent.Keyboard.keyCode(ev) === 13) {
               ReactEvent.Keyboard.preventDefault(ev);
+              let _ = [%bs.raw {| document.getElementById("search").blur() |}];
               onSearch(self.state.text);
             }
         }
-        autoFocus=true
       />
     </div>,
   willReceiveProps: _self => {text: lookfor},
-  didMount: _self => {
-    let _x = [%bs.raw {| document.getElementById("search").focus() |}];
-    ();
-  },
+  didMount: _ =>
+    /* focus search field on keypress */
+    Webapi.Dom.Element.addKeyDownEventListener(
+      e => {
+        let code = Webapi.Dom.KeyboardEvent.code(e);
+        Js.Re.fromString("Key.*")
+        |> Js.Re.exec(code)
+        |> (
+          fun
+          | Some(_result) => {
+              let _x = [%bs.raw
+                {| document.getElementById("search").focus() |}
+              ];
+              ();
+            }
+          | None => ()
+        );
+      },
+      Webapi.Dom.Document.documentElement(Webapi.Dom.document),
+    ),
 };

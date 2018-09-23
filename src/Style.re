@@ -8,7 +8,10 @@ let greyLighter = hex("f1f5f8");
 
 let init = () => {
   global("body", [margin(px(0))]);
-  global("html", [fontFamily("sans-serif"), color(black)]);
+  global(
+    "html",
+    [display(`block), fontFamily("sans-serif"), color(black)],
+  );
   global("h1, h2, h3", [color(rgb(0, 0, 0))]);
   global(
     "h1, h2, h3, p",
@@ -89,19 +92,41 @@ let pad = style([padding(basePadding)]);
 let padRight = p => style([paddingRight(em(p))]);
 let error = style([padding(basePadding), color(red)]);
 
-let recordList = (~visited) =>
+let formatColor = (~format) =>
+  switch (format) {
+  | Some(format) =>
+    switch (format) {
+    | "0/Book/" => hex("ff0000")
+    | "0/Sound/" => hex("00ff00")
+    | "0/Image/" => hex("00f000")
+    | _ => hex("0000ff")
+    }
+  | _ => hex("0000ff")
+  };
+
+let recordList = (~visited, ~format) =>
   style([
     borderBottom(px(1), solid, greyLight),
-    padding2(~v=em(0.2), ~h=em(1.0)),
     backgroundColor(visited ? hex("eff8ff") : white),
+    borderLeft(em(0.5), `solid, formatColor(~format)),
+  ]);
+
+let recordListBkg =
+  style([
+    padding2(~v=em(0.2), ~h=em(1.0)),
     hover([backgroundColor(greyLighter)]),
     cursor(`pointer),
   ]);
 
+let recordIcon = style([marginRight(em(0.5))]);
+
+let recordListFacetLinks =
+  style([textAlign(`right), marginBottom(em(0.5))]);
+
 let recordFull = style([padding(basePadding)]);
 
 let recordLinks = style([marginLeft(em(1.0)), listStyleType(`circle)]);
-let recordLink = style([listStyleType(`disc)]);
+let recordLink = style([listStyleType(`disc), wordBreak(`breakAll)]);
 
 let recordImages = style([marginTop(em(1.0))]);
 let recordImage =

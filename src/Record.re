@@ -67,27 +67,38 @@ let make =
           isActive={!isFacetActive(key)}
           onSelect=onSelectFacet
         />
-      | [] => ReasonReact.null
+      | _ => ReasonReact.null
       };
 
     switch (details) {
     | List =>
       <li
-        onClick
         key={record.id}
-        className={Style.recordList(~visited=isVisited)}>
-        <a target="_finna"> <h2> {str(record.title)} </h2> </a>
-        <p>
-          authors
-          {facetLink("format", record.formats)}
-          {
-            switch (record.buildings) {
-            | Some(buildings) => facetLink("building", buildings)
-            | None => ReasonReact.null
+        className={
+          Style.recordList(
+            ~visited=isVisited,
+            ~format=Finna.getFormat(record),
+          )
+        }>
+        <div className=Style.recordListBkg onClick>
+          <a target="_finna"> <h2> {str(record.title)} </h2> </a>
+          <p>
+            <FormatIcon format={Finna.getFormat(record)} />
+            publishers
+            year
+          </p>
+          <p> authors </p>
+        </div>
+        <div className=Style.recordListFacetLinks>
+          /* {facetLink("format", record.formats)} */
+
+            {
+              switch (record.buildings) {
+              | Some(buildings) => facetLink("building", buildings)
+              | None => ReasonReact.null
+              }
             }
-          }
-        </p>
-        <p> publishers year </p>
+          </div>
       </li>
     | Full =>
       <div className=Style.recordFull>
