@@ -61,6 +61,7 @@ let make =
       switch (Array.to_list(facets)) {
       | [facet, ..._rest] =>
         <FacetLink
+          key={facet.value}
           label={facet.label}
           facetKey=key
           value={facet.value}
@@ -119,6 +120,7 @@ let make =
                 img =>
                   <div>
                     <img
+                      key=img
                       className={Style.recordImage ++ " record-image"}
                       href=img
                     />
@@ -144,7 +146,7 @@ let make =
                         | _ => ("", "")
                         };
                       <li className=Style.recordLink>
-                        <a href=url> {str(label)} </a>
+                        <a key=url href=url> {str(label)} </a>
                       </li>;
                     },
                     links,

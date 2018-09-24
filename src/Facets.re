@@ -31,6 +31,7 @@ let make =
           |> Js.Dict.values
           |> Array.mapi((ind, facet: Finna.facet) =>
                <Facet
+                 key={facet.key}
                  ind
                  onGetFacets
                  onSelectFacet

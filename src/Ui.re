@@ -90,6 +90,7 @@ module Results = {
                       Array.map(
                         (r: Finna.record) =>
                           <Record
+                            key={r.id}
                             details=Record.List
                             record=r
                             onClick={_e => self.send(OpenRecord(r.id))}
