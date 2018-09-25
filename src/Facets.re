@@ -13,15 +13,7 @@ let getTitle = key =>
   )
   ++ "s";
 
-let make =
-    (
-      ~onGetFacets,
-      ~onSelectFacet,
-      ~onClearFacet,
-      ~facets,
-      ~filters,
-      _children,
-    ) => {
+let make = (~onSelectFacet, ~onClearFacet, ~facets, ~filters, _children) => {
   ...component,
   render: _self =>
     <div>
@@ -33,11 +25,11 @@ let make =
                <Facet
                  key={facet.key}
                  ind
-                 onGetFacets
                  onSelectFacet
                  onClearFacet
                  facet
                  filters
+                 /* onGetFacets */
                  title={getTitle(facet.key)}
                />
              ),

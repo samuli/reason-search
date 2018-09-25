@@ -5,7 +5,7 @@ type action =
 
 let component = ReasonReact.reducerComponent("SearchField");
 
-let make = (~lookfor, ~onSearch, _children) => {
+let make = (~lookfor, _children) => {
   ...component,
   initialState: () => {text: lookfor},
   reducer: (action: action, _state: state) =>
@@ -27,7 +27,9 @@ let make = (~lookfor, ~onSearch, _children) => {
             if (ReactEvent.Keyboard.keyCode(ev) === 13) {
               ReactEvent.Keyboard.preventDefault(ev);
               let _ = [%bs.raw {| document.getElementById("search").blur() |}];
-              onSearch(self.state.text);
+              ReasonReact.Router.push(
+                "/#/Search?lookfor=" ++ self.state.text,
+              );
             }
         }
       />

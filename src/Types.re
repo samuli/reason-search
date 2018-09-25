@@ -1,3 +1,13 @@
+/* type remoteData = [ | `NotAsked | `Asked | `Loading | `Failure | `Success]; */
+
+type remoteData('t) =
+  | NotAsked
+  | Loading(string)
+  | Failure(string)
+  | Success('t);
+
+let e = Failure("foO");
+
 type searchActionType =
   | Search
   | NewSearch

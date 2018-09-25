@@ -33,7 +33,6 @@ let boolFacet = (onClick, value, _label) =>
 let make =
     (
       ~ind,
-      ~onGetFacets,
       ~onSelectFacet,
       ~onClearFacet,
       ~facet: Finna.facet,
@@ -57,7 +56,8 @@ let make =
               items: [||],
             },
           },
-          (self => onGetFacets(facet.key, self.send)),
+          (self => Js.log("getfacet: " ++ facet.key)),
+          /* onGetFacets(facet.key, self.send)), */
         )
       | Loaded => ReasonReact.Update({...state, mode: Open})
       | _ => ReasonReact.NoUpdate
