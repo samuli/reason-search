@@ -63,11 +63,11 @@ let make = _children => {
               | Main => <p> {str("main")} </p>
               | Search(_lookfor, _searchType) => <Search store />
 
-              | Record(id) =>
-                switch (store.state.record) {
-                | Loading(id) => <p> {str("loading: " ++ id)} </p>
-                | _ => <p> {str("rec route: " ++ id)} </p>
-                }
+              | Record(_id) => <Record store />
+              /* switch (store.state.record) { */
+              /* | Loading(id) => <p> {str("loading: " ++ id)} </p> */
+              /* | _ => <p> {str("rec route: " ++ id)} </p> */
+              /* } */
               | NotFound => <p> {str("404")} </p>
               }
             }

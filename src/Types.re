@@ -6,8 +6,6 @@ type remoteData('t) =
   | Failure(string)
   | Success('t);
 
-let e = Failure("foO");
-
 type searchActionType =
   | Search
   | NewSearch
